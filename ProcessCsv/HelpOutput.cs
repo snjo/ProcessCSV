@@ -69,7 +69,8 @@ namespace ProcessCSV
                 "                           If delimiter count is wrong, columns may be misaligned. Also removes quotes from the fields." + NL +
                 NL +
                 "/newheaders     /nwh       Replace or add headers (column names) with a custom set of names." + NL +
-                "                           Enclose text in quotes if names contain spaces. If no names are listed, generic names are used." + NL +
+                "                           Enclose text in quotes if names contain spaces. " + NL +
+                "                           If no names are listed, generic names are used." + NL +
                 "                           Example: /nwh Name,Email,Phone" + NL +
                 "                           Example: /nwh \"Name,Email Address,Phone Number\"" + NL +
                 "                           Example: /nwh    >  This will generate Column 1, Column 2, Column 3 etc." + NL +

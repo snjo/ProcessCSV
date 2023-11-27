@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ProcessCsv": {
+      "commandName": "Project",
+      "commandLineArgs": "bad.csv /ex /hd /fbd"
+    }
+  }
+}
