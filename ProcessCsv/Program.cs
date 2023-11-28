@@ -4,7 +4,9 @@
 // https://joshclose.github.io/CsvHelper/
 
 using System.Diagnostics;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using ProcessCsv;
 using ProcessCsvLibrary;
 
 namespace ProcessCSV
@@ -22,25 +24,48 @@ namespace ProcessCSV
             }
             catch
             {
-                Messages.Warning("Could not set console encoding to UTF8, some characters may display incorrectly");
+                Messages.Warning("Could not set console encoding to UTF8, some characters may display incorrectly", quiet: false);
             }
+
+            ProcessTextFile processor = new ProcessTextFile();
 
             // if no argmunts are supplied, show help
             if (commandLineArgs.Length == 0)
             {
-                HelpOutput.helpText(pause: false);
-                return (int)ExitCode.InfoShown;
+                // test input menu
+                Menu menu = new Menu(processor.Arguments);
+                menu.Start();
+                if (menu.MenuResult == MenuResultValues.SaveFile)
+                {
+                    // proceed
+                }
+                else if (menu.MenuResult == MenuResultValues.Help)
+                {
+                    HelpOutput.helpText(pause: true, exit: true);
+                    return (int)ExitCode.InfoShown; // unreachable
+                }
+                else
+                {
+                    return (int)ExitCode.Aborted;
+                }
             }
-
-            ProcessTextFile processor = new ProcessTextFile();
-            // convert command line arguments, must happen before processing starts
-            processArgs(commandLineArgs, processor.Arguments);
+            else
+            {
+                // convert command line arguments, must happen before processing starts
+                processArgs(commandLineArgs, processor.Arguments);
+            }
+            
+            //processArgs(commandLineArgs, processor.Arguments);
             CsvArguments arguments = processor.Arguments;
+
+            // You can suppress error or warnings. Not implemented as arguments yet - TODO
+            //arguments.SupressErrors = true;
+            //arguments.SupressWarnings = true;
 
             // show help if /? or /help. Will exit the program, no file operations will be done.
             if (arguments.Help)
             {
-                HelpOutput.helpText(arguments.Pause);
+                HelpOutput.helpText(arguments.Pause, exit: true);
             }
             
             // if a source file is specified, load
@@ -70,12 +95,12 @@ namespace ProcessCSV
                 }
 
                 // all operations are complete, exit
-                Messages.ExitProgram(exitCode: ExitCode.Success, "Operation completed successfully.", arguments.Quiet, arguments.Pause);
+                Messages.ExitProgram(exitCode: ExitCode.Success, "Operation completed successfully.", arguments.Quiet, arguments.Pause, exit: true);
                 return (int)ExitCode.Success; // should be unreachable
             }
             else
             {
-                Messages.ExitProgram(exitCode: ExitCode.SourceFileNotFound, message: "No source file specified. Use /? for /help info.", arguments.Quiet, arguments.Pause);
+                Messages.ExitProgram(exitCode: ExitCode.SourceFileNotFound, message: "No valid source file specified. Use /? or /help for info.", arguments.SupressErrors, arguments.Pause, exit: true);
                 return (int)ExitCode.SourceFileNotFound; // should be unreachable
             }
         }
@@ -101,7 +126,7 @@ namespace ProcessCSV
             }
             else
             {
-                Messages.Warning("/headers: Could not get fields to display");
+                Messages.Warning("/headers: Could not get fields to display", quiet: false);
             }
             Messages.Message("", quiet: false); // blank line
         }
@@ -164,7 +189,7 @@ namespace ProcessCSV
                             }
                             else
                             {
-                                Messages.Warning("/load used, but no load file was specified. Example: /l source.csv");
+                                Messages.Warning("/load used, but no load file was specified. Example: /l source.csv", arguments.SupressWarnings);
                             }
                             break;
                         case "save":
@@ -175,7 +200,7 @@ namespace ProcessCSV
                             }
                             else
                             {
-                                Messages.Warning("/save used, but no save file was specified. Example: /s result.csv");
+                                Messages.Warning("/save used, but no save file was specified. Example: /s result.csv", arguments.SupressWarnings);
                             }
                             break;
                         case "inencoding":
@@ -186,7 +211,7 @@ namespace ProcessCSV
                             }
                             else
                             {
-                                Messages.Warning("/inencoding used, but no encoding was specified. Examples: /ie Latin1  /ie UTF-8");
+                                Messages.Warning("/inencoding used, but no encoding was specified. Examples: /ie Latin1  /ie UTF-8", arguments.SupressWarnings);
                             }
                             break;
                         case "outencoding":
@@ -197,7 +222,7 @@ namespace ProcessCSV
                             }
                             else
                             {
-                                Messages.Warning("/outencoding used, but no encoding was specified. Examples: /oe Latin1  /oe UTF-8");
+                                Messages.Warning("/outencoding used, but no encoding was specified. Examples: /oe Latin1  /oe UTF-8", arguments.SupressWarnings);
                             }
                             break;
                         case "fieldselect":
@@ -208,7 +233,7 @@ namespace ProcessCSV
                             }
                             else
                             {
-                                Messages.Warning("/fieldselect used, but no fields were specified. Example: /fs 0,-1,4,8");
+                                Messages.Warning("/fieldselect used, but no fields were specified. Example: /fs 0,-1,4,8", arguments.SupressWarnings);
                             }
                             break;
                         case "example":
@@ -227,7 +252,7 @@ namespace ProcessCSV
                             }
                             else
                             {
-                                Messages.Warning("/indelimiter used, but no delimiter was specified. Example: /id ;");
+                                Messages.Warning("/indelimiter used, but no delimiter was specified. Example: /id ;", arguments.SupressWarnings);
                             }
                             break;
                         case "outdelimiter":
@@ -238,7 +263,7 @@ namespace ProcessCSV
                             }
                             else
                             {
-                                Messages.Warning("/outdelimiter used, but no delimiter was specified. Examples: /od tab  /od comma  /od ;");
+                                Messages.Warning("/outdelimiter used, but no delimiter was specified. Examples: /od tab  /od comma  /od ;", arguments.SupressWarnings);
                             }
                             break;
                         case "headers":
@@ -256,22 +281,22 @@ namespace ProcessCSV
                             {
                                 if (int.TryParse(commandValue, out arguments.FieldCount) == false)
                                 {
-                                    Messages.Warning("/fc used, but the value was not a valid number. Examples: /fc 4");
+                                    Messages.Warning("/fc used, but the value was not a valid number. Examples: /fc 4", arguments.SupressWarnings);
                                 }
                             }
                             else
                             {
-                                Messages.Warning("/fc used, but no delimiter was specified. Examples: /fc 4");
+                                Messages.Warning("/fc used, but no delimiter was specified. Examples: /fc 4", arguments.SupressWarnings);
                             }
                             break;
                         case "ignorebaddata":
                         case "ibd":
-                            Messages.Warning("Ignoring exceptions from bad data (/ibd). This can cause fields to appear in the wrong column.");
+                            Messages.Warning("Ignoring exceptions from bad data (/ibd). This can cause fields to appear in the wrong column.", arguments.SupressWarnings);
                             arguments.IgnoreBadData = true;
                             break;
                         case "ignoremissing":
                         case "imf":
-                            Messages.Warning("Ignoring exceptions from missing fields (/imf). Missing fields will be replaced by empty values.");
+                            Messages.Warning("Ignoring exceptions from missing fields (/imf). Missing fields will be replaced by empty values.", arguments.SupressWarnings);
                             arguments.IgnoreMissingField = true;
                             break;
                         case "fixbaddata":
@@ -291,12 +316,12 @@ namespace ProcessCSV
                             }
                             else
                             {
-                                Messages.Warning("/hewheaders used, but no header names was specified. Generating generic column names");
+                                Messages.Warning("/hewheaders used, but no header names was specified. Generating generic column names", arguments.SupressWarnings);
                                 arguments.ReplaceHeaders = true;
                             }
                             break;
                         default:
-                            Messages.ExitProgram(exitCode: ExitCode.InvalidArgument, "Invalid argument passed: /" + commandType, arguments.Quiet, arguments.Pause);
+                            Messages.ExitProgram(exitCode: ExitCode.InvalidArgument, "Invalid argument passed: /" + commandType, arguments.SupressErrors, arguments.Pause, exit: true);
                             break;
                             
                     }
@@ -304,7 +329,7 @@ namespace ProcessCSV
                     //check conflicting arguments
                     if (arguments.FixBadData && arguments.IgnoreBadData)
                     {
-                        Messages.Warning("Fix Bad Data requires Ignore Bad Data to be off. Disabling the ignore argument");
+                        Messages.Warning("Fix Bad Data requires Ignore Bad Data to be off. Disabling the ignore argument", arguments.SupressWarnings);
                         arguments.IgnoreBadData = false;
                     }
                 }
@@ -323,17 +348,17 @@ namespace ProcessCSV
                     {
                         if (File.Exists(argument))
                         {
-                            Messages.Message("Assuming unspecified argument is file name: " + argument + " (This file exists)");
+                            Debug.WriteLine("Assuming unspecified argument is file name: " + argument + " (This file exists)");
                             return argument;
                         }
                     }
                     else
                     {
-                        Messages.Message("Assuming unspecified argument is file name: " + argument);
+                        Debug.WriteLine("Assuming unspecified argument is file name: " + argument);
                         return argument;
                     }
                 }
-                Messages.Message("Assuming unspecified argument is file name: " + argument + ", but that file can't be found.");
+                Debug.WriteLine("Assuming unspecified argument is file name: " + argument + ", but that file can't be found.");
             }
             return string.Empty;
         }

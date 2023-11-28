@@ -4,13 +4,9 @@
 // https://joshclose.github.io/CsvHelper/
 using CsvHelper;
 using CsvHelper.Configuration;
-using CsvHelper.Configuration.Attributes;
 using System.Diagnostics;
 using System.Globalization;
-using System.Reflection.PortableExecutable;
 using System.Text;
-using static System.Net.Mime.MediaTypeNames;
-using ProcessCsvLibrary;
 
 namespace ProcessCsvLibrary
 {
@@ -20,6 +16,14 @@ namespace ProcessCsvLibrary
         /// Input arguments based on command line arguments. Defines the actions of the processor
         /// </summary>
         public CsvArguments Arguments = new CsvArguments();
+
+        // The message methods can be replaced if used outside of console application
+        public delegate void MessageDelegate(string message, bool quiet);
+        public delegate void ExitDelegate(ExitCode exitCode, string? message, bool quiet, bool pause, bool exit);
+        public MessageDelegate Message = Messages.Message;
+        public MessageDelegate Warning = Messages.Warning;
+        public MessageDelegate Error = Messages.Error;
+        public ExitDelegate Exit = Messages.ExitProgram;
 
         string[]? linesOut;
         List<Record> allRecords = new List<Record>(); // a record is equivalent to a row in the text file       
@@ -39,22 +43,25 @@ namespace ProcessCsvLibrary
         }
 
         /// <summary>
-        /// Loads a text file into a list of records, and an array of raw text lines.
+        /// Loads a text file into a list of records, and an array of raw text lines. Exits the program if Arguments.ExitOnError is true and load fails
         /// </summary>
         /// <param name="file"></param>
         /// <param name="encoding"></param>
-        public void LoadFile(string file, Encoding encoding)
+        /// <returns>True if the file loaded, false if not.</returns>
+        public bool LoadFile(string file, Encoding encoding)
         {
             file = Environment.ExpandEnvironmentVariables(file);
             if (File.Exists(file))
             {
-                Messages.Message("Loading CSV (" + file + ") with codepage " + encoding.EncodingName, Arguments.Quiet);
+                Message("Loading CSV (" + file + ") with codepage " + encoding.EncodingName, Arguments.Quiet);
                 linesAsArray = File.ReadAllLines(file);
                 GetAllFields(file, encoding);
+                return true;
             }
             else
             {
-                Messages.ExitProgram(exitCode: ExitCode.SourceFileNotFound, message: "File not found: " + file, Arguments.Quiet, Arguments.Pause);
+                Exit(exitCode: ExitCode.SourceFileNotFound, message: "File not found: " + file, Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
+                return false;
             }
         }
 
@@ -113,7 +120,7 @@ namespace ProcessCsvLibrary
                     }
                     catch
                     {
-                        Messages.ExitProgram(ExitCode.InvalidEncoding, "Error parsing encoding " + encodingName, Arguments.Quiet, Arguments.Pause);
+                        Exit(ExitCode.InvalidEncoding, "Error parsing encoding " + encodingName, Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
                         return Encoding.UTF8; // should be unreachable
                     }   
             }
@@ -166,7 +173,7 @@ namespace ProcessCsvLibrary
                     else
                     {
                         if (fieldIndexes[i] != -1) // ignore index errors when using -1, that's used for leaving a blank field on purpose. If someone used another out of index value, warn them.
-                            Messages.Warning("Error reading field " + i + " on line " + selectedLine + ". Field select " + fieldIndexes[i] + " is out of range.");
+                            Warning("Error reading field " + i + " on line " + selectedLine + ". Field select " + fieldIndexes[i] + " is out of range.", quiet: Arguments.SupressWarnings);
                     }
                     //result += record.SafeIndex(fieldIndexes[i], "*");
                     if (i < fieldIndexes.Length - 1)
@@ -227,7 +234,7 @@ namespace ProcessCsvLibrary
         /// <param name="encoding">encoding used for the target file</param>
         public void SaveFile(string filename, Encoding encoding)
         {
-            Messages.Message("Saving to file: " + filename + ", Encoding: " + encoding.EncodingName, Arguments.Quiet);
+            Message("Saving to file: " + filename + ", Encoding: " + encoding.EncodingName, Arguments.Quiet);
             linesOut = processLinesCSV().ToArray();
             try
             {
@@ -261,8 +268,8 @@ namespace ProcessCsvLibrary
                 {
                     errorMessage = "Unknown error, see details below:" + Environment.NewLine + e.ToString();
                 }
-                Messages.Error(Environment.NewLine + errorMessage);
-                Messages.ExitProgram(exitCode: exitCode, message: "Error saving to file: " + filename, Arguments.Quiet, Arguments.Pause);
+                Error(Environment.NewLine + errorMessage, quiet: Arguments.SupressErrors);
+                Exit(exitCode: exitCode, message: "Error saving to file: " + filename, Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
             }
         }
 
@@ -292,7 +299,6 @@ namespace ProcessCsvLibrary
                 if (text.Contains(illegal))
                 {
                     illegalFound = true;
-                    Console.WriteLine("Illegal character:" +  illegal);
                 }
             }
             return illegalFound;
@@ -377,7 +383,7 @@ namespace ProcessCsvLibrary
             }
             catch
             {
-                Messages.Error("File load error", Arguments.Quiet);
+                Error("File load error", quiet: Arguments.SupressErrors);
                 return;
             }
 
@@ -422,7 +428,7 @@ namespace ProcessCsvLibrary
             TimeSpan span = DateTime.Now - time;
 
 
-            Messages.Message("Loaded " + linesLoadedFromCSV + " lines from: " + Path.GetFileName(filename) + " in " + span.TotalSeconds + " seconds", Arguments.Quiet);
+            Message("Loaded " + linesLoadedFromCSV + " lines from: " + Path.GetFileName(filename) + " in " + span.TotalSeconds + " seconds", Arguments.Quiet);
                 
         }
 
@@ -461,10 +467,10 @@ namespace ProcessCsvLibrary
                             }
                             else
                             {
-                                Messages.ExitProgram(ExitCode.SourceFileParseError, "Error: Bad Data on line " + lineNumber + ", field " + fieldNumber +
+                                Exit(ExitCode.SourceFileParseError, "Error: Bad Data on line " + lineNumber + ", field " + fieldNumber +
                                     Environment.NewLine + "Line: " + (linesAsArray != null ? linesAsArray[lineNumber] : "???") +
                                     Environment.NewLine + "Please check if correct delimiters are set (, or ;) and all \" quotes are closed out.",
-                                    Arguments.Quiet, Arguments.Pause);
+                                    Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
                             }
                         }
                         else if (ex is CsvHelper.MissingFieldException)
@@ -475,16 +481,16 @@ namespace ProcessCsvLibrary
                             }
                             else
                             {
-                                Messages.ExitProgram(ExitCode.SourceFileParseError, "Error: Missing Field on line " + lineNumber + ", field " + fieldNumber + ". Expected number of fields: " + maxFields, Arguments.Quiet, Arguments.Pause);
+                                Exit(ExitCode.SourceFileParseError, "Error: Missing Field on line " + lineNumber + ", field " + fieldNumber + ". Expected number of fields: " + maxFields, Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
                             }
                         }
                         else if (ex is CsvHelper.ParserException) //CsvHelper.ParserException)
                         {
-                            Messages.ExitProgram(ExitCode.SourceFileParseError, "Error: Can't parse file. Check delimiter type. Remove /id to use auto detect.", Arguments.Quiet, Arguments.Pause);
+                            Exit(ExitCode.SourceFileParseError, "Error: Can't parse file. Check delimiter type. Remove /id to use auto detect.", Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
                         }
                         else
                         {
-                            Messages.ExitProgram(ExitCode.UnkownError, "Error: An exception occured, see details: " + Environment.NewLine + ex.Message, Arguments.Quiet, Arguments.Pause);
+                            Exit(ExitCode.UnkownError, "Error: An exception occured, see details: " + Environment.NewLine + ex.Message, Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
                         }
 
 
@@ -512,7 +518,7 @@ namespace ProcessCsvLibrary
         {
             if (allRecords.Count == 0)
             {
-                Messages.Warning("Could not change column names, there are no records");
+                Warning("Could not change column names, there are no records", quiet: Arguments.SupressWarnings);
                 return;
             }
 
@@ -558,15 +564,15 @@ namespace ProcessCsvLibrary
 
         private void SetColumnNamesFromNewHeadersArgument()
         {
-            Messages.Message("Changing column names to: " + Arguments.NewHeaders);
+            Message("Changing column names to: " + Arguments.NewHeaders, Arguments.Quiet);
             List<string> newHeaders = new List<string>(Arguments.NewHeaders.Split(Arguments.DelimiterRead));
             if (newHeaders.Count > fieldCount)
             {
-                Messages.Warning("Too many headers in New Headers argument, expected " + fieldCount + ". The extra ones will be dropped.");
+                Warning("Too many headers in New Headers argument, expected " + fieldCount + ". The extra ones will be dropped.", quiet: Arguments.SupressWarnings);
             }
             else if (newHeaders.Count < fieldCount)
             {
-                Messages.Warning("Too few headers in New Headers argument, expected " + fieldCount + ". Extra headers will be insterted with generic name.");
+                Warning("Too few headers in New Headers argument, expected " + fieldCount + ". Extra headers will be insterted with generic name.", quiet: Arguments.SupressWarnings);
                 for (int i = newHeaders.Count-1; i < fieldCount; i++)
                 {
                     newHeaders.Add("Column " + (i+1));
@@ -610,14 +616,14 @@ namespace ProcessCsvLibrary
             string lineText = linesAsArray != null ? linesAsArray.SafeIndex(lineNumber) : "";
             string[] splitText = lineText.Split(Arguments.DelimiterRead);
             int delimiterCount = splitText.Length;
-            Messages.Warning("Fixing fields on line " + lineNumber + ": " + lineText + ". Also Removing quotes (\")");
+            Warning("Fixing fields on line " + lineNumber + ": " + lineText + ". Also Removing quotes (\")", quiet: Arguments.SupressWarnings);
             if (delimiterCount > maxFields)
             {
-                Messages.Warning("Line " + lineNumber + " has too many delimiters. Data may be misaligned in columns.");
+                Warning("Line " + lineNumber + " has too many delimiters. Data may be misaligned in columns.", quiet: Arguments.SupressWarnings);
             }
             else if (delimiterCount < maxFields)
             {
-                Messages.Warning("Line " + lineNumber + " has too few delimiters. Data may be misaligned in columns.");
+                Warning("Line " + lineNumber + " has too few delimiters. Data may be misaligned in columns.", quiet: Arguments.SupressWarnings);
             }
 
             // fixing and replacing the entire line instead of just this one field, otherwise, there's a high chance of running into a missing field error later.
@@ -631,7 +637,7 @@ namespace ProcessCsvLibrary
                 }
                 else
                 {
-                    Messages.Warning("Skipped field" + fieldNumber + " Too few delimiters on line " + lineNumber + ": " + lineText);
+                    Warning("Skipped field" + fieldNumber + " Too few delimiters on line " + lineNumber + ": " + lineText, quiet: Arguments.SupressWarnings);
                 }
             }
 
@@ -679,17 +685,17 @@ namespace ProcessCsvLibrary
                 {
                     if (columnCount0 >= columnCount1)
                     {
-                        Messages.Warning("Autodetect field count: Found only 1 field on line 0 and 1, using count: " + columnCount0);
+                        Warning("Autodetect field count: Found only 1 field on line 0 and 1, using count: " + columnCount0, quiet: Arguments.SupressWarnings);
                         columnCount = columnCount0;
                     }
                     else
                     {
-                        Messages.Warning("Autodetect field count: Found only 1 field on line 0, using count from line 1: " + columnCount1);
+                        Warning("Autodetect field count: Found only 1 field on line 0, using count from line 1: " + columnCount1, quiet: Arguments.SupressWarnings);
                         columnCount = columnCount1;
                     }
                 }
             }
-            Messages.Message("Guessed number of fields: " + columnCount + " using delimiter: " + Arguments.DelimiterRead);
+            Message("Guessed number of fields: " + columnCount + " using delimiter: " + Arguments.DelimiterRead, Arguments.Quiet);
             return columnCount;
         }
 
@@ -708,7 +714,7 @@ namespace ProcessCsvLibrary
 
                 if (comma < 1 && semicolon < 1 && tab < 1)
                 {
-                    Messages.Warning("Autodetect delimiter: Line 0 had no delimiters, trying line 1");
+                    Warning("Autodetect delimiter: Line 0 had no delimiters, trying line 1", quiet: Arguments.SupressWarnings);
                     if (linesAsArray.Length > 1)
                     {
                         CountAllDelimiterTypes(linesAsArray[1], out comma, out semicolon, out tab);
@@ -718,27 +724,27 @@ namespace ProcessCsvLibrary
                 // determines the winning delimiter by majority count
                 if (comma > semicolon)
                 {
-                    Messages    .Message("Autodetect: Setting delimiter to comma");
+                    Message("Autodetect: Setting delimiter to comma", Arguments.Quiet);
                     return ",";
                 }
                 else if (semicolon > tab)
                 {
-                    Messages.Message("Autodetect: Setting delimiter to semicolon");
+                    Message("Autodetect: Setting delimiter to semicolon", Arguments.Quiet);
                     return ";";
                 }
                 else if (tab > 0)
                 {
-                    Messages.Message("Autodetect: Setting delimiter to tab");
+                    Message("Autodetect: Setting delimiter to tab", Arguments.Quiet);
                     return "\t";
                 }
                 else
                 {
-                    Messages.Warning("Autodetect: Couldn't count delimiters on line 0 or 1, defaulting to comma");
+                    Warning("Autodetect: Couldn't count delimiters on line 0 or 1, defaulting to comma", quiet: Arguments.SupressWarnings);
                     return ",";
                 }
             }
 
-            Messages.Warning("Autodetect: Couldn't count delimiters, defaulting to comma");
+            Warning("Autodetect: Couldn't count delimiters, defaulting to comma", quiet: Arguments.SupressWarnings);
             return ",";
         }
 
@@ -754,7 +760,7 @@ namespace ProcessCsvLibrary
             comma = (countDelimiter(",", text)) -1 ;
             semicolon = (countDelimiter(";", text)) - 1;
             tab = (countDelimiter("\t", text)) - 1;
-            Messages.Message("Delimiters detected: comma: " + comma + " semicolon:" + semicolon + " tab: " + tab);
+            Message("Delimiters detected: comma: " + comma + " semicolon:" + semicolon + " tab: " + tab, Arguments.Quiet);
         }
 
         /// <summary>
@@ -781,7 +787,7 @@ namespace ProcessCsvLibrary
                 }
                 catch
                 {
-                    Messages.ExitProgram(ExitCode.InvalidFields, "Error in pattern: " + text, Arguments.Quiet, Arguments.Pause);
+                    Exit(ExitCode.InvalidFields, "Error in pattern: " + text, Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
                 }
             }
             fieldIndexes = pattern.ToArray();

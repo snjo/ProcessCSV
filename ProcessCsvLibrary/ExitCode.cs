@@ -15,6 +15,7 @@ public enum ExitCode : int
     TargetUnauthorized = 8,
     TargetDirectoryNotFound = 9,
     UnkownError = 10,
+    Aborted = 11,
     END
 }
 

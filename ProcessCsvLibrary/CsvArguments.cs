@@ -8,7 +8,7 @@ namespace ProcessCsvLibrary
         public string SourceFile = string.Empty;
         public string TargetFile = string.Empty;
         public string SourceEncoding = "";
-        public string TargetEncoding = "UTF8";
+        public string TargetEncoding = "UTF-8";
         public string SelectedFields = "";
         public bool DisplayResult = false;
         public bool DisplayHeaders = false;
@@ -25,6 +25,9 @@ namespace ProcessCsvLibrary
         public bool ReplaceHeaders = false;
         public string NewHeaders = string.Empty;
         public bool FileHasHeaders = true;
+        public bool ExitOnError = true;
+        public bool SupressWarnings = false;
+        public bool SupressErrors = false;
     }
 }
 

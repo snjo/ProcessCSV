@@ -12,7 +12,7 @@ namespace ProcessCSV
     public static class HelpOutput
     {
         private static string NL = Environment.NewLine;
-        public static void helpText(bool pause)
+        public static void helpText(bool pause, bool exit)
         {
             Console.WriteLine(NL+"Processes a CSV file to remove unwanted fields, change delimiter, encoding or inspect contents" + NL);
 
@@ -89,7 +89,8 @@ namespace ProcessCSV
                 Console.WriteLine(i + " : " + ((ExitCode)i).ToString());
             }
 
-            Messages.ExitProgram(exitCode: ExitCode.InfoShown, message: null, quiet: false, pause);
+            
+            Messages.ExitProgram(exitCode: ExitCode.InfoShown, message: null, quiet: false, pause, exit);
         }
     } 
 }

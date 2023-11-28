@@ -9,7 +9,7 @@ namespace ProcessCsvLibrary;
 
 public class Messages
 { 
-    public static void Message(string message, bool quiet = false)
+    public static void Message(string message, bool quiet)
     {
         if (quiet == false)
         {
@@ -18,7 +18,7 @@ public class Messages
         Debug.WriteLine("Message: " + message);
     }
 
-    public static void Warning(string message, bool quiet = false)
+    public static void Warning(string message, bool quiet)
     {
         if (quiet == false)
         {
@@ -30,7 +30,7 @@ public class Messages
         Debug.WriteLine("Warning: " + message);
     }
 
-    public static void Error(string message, bool quiet = false)
+    public static void Error(string message, bool quiet)
     {
         if (quiet == false)
         {
@@ -42,7 +42,7 @@ public class Messages
         Debug.WriteLine("Error: " + message);
     }
 
-    public static void ExitProgram(ExitCode exitCode, string? message, bool quiet, bool pause)
+    public static void ExitProgram(ExitCode exitCode, string? message, bool quiet, bool pause, bool exit)
     {
         ConsoleColor previousColor = Console.ForegroundColor;
         if ((int)exitCode > 1)
@@ -68,6 +68,9 @@ public class Messages
             Debug.WriteLine("Exiting without pause");
         }
         Console.ForegroundColor = previousColor;
-        Environment.Exit((int)exitCode);
+        if (exit)
+        {
+            Environment.Exit((int)exitCode);
+        }
     }
 }
