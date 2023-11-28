@@ -75,7 +75,16 @@ namespace ProcessCsv
             {
                 Console.WriteLine(i + ": " + menu[i].Name);
             }
-            Console.WriteLine("Q: Quit");
+
+            if (argument == "Main menu")
+            {
+                Console.WriteLine("Q: Quit");
+            }
+            else
+            {
+                Console.WriteLine("Q: Back");
+            }
+
             Console.WriteLine(Environment.NewLine + Environment.NewLine + Environment.NewLine);
             Console.WriteLine("--------- ARGUMENTS ----------------");
             ShowArguments();
@@ -84,7 +93,10 @@ namespace ProcessCsv
             ConsoleKeyInfo pressedKey = Console.ReadKey(true);
             if (pressedKey.KeyChar == 'Q' || pressedKey.KeyChar == 'q')
             {
-                MenuResult = MenuResultValues.Exit;
+                if (argument == "Main Menu")
+                {
+                    MenuResult = MenuResultValues.Exit;
+                }
                 return false; // exit the menu
             }
 
@@ -274,7 +286,7 @@ namespace ProcessCsv
         private void ActionSelectFields(string argument = "", string subArgument = "")
         {
             Console.Clear();
-            Console.WriteLine("Enter selected Fields (example: 0,1,4,8):");
+            Console.Write("Enter selected Fields (example: 0,1,4,8):");
             string text = Console.ReadLine()+"";
             Arguments.SelectedFields = text;
         }
@@ -283,7 +295,7 @@ namespace ProcessCsv
         {
             //Console.Clear();
             Console.WriteLine("Valid delimiter aliases: tab, comma, semicolon");
-            Console.WriteLine("Enter " + argument + " delimiter:");
+            Console.Write("Enter " + argument + " delimiter: ");
             string text = Console.ReadLine() + "";
             if (argument == argSource)
             {
