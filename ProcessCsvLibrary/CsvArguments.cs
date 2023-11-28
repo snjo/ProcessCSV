@@ -7,7 +7,7 @@ namespace ProcessCsvLibrary
         public bool Help = false;
         public string SourceFile = string.Empty;
         public string TargetFile = string.Empty;
-        public string SourceEncoding = "";
+        public string SourceEncoding = "UTF-8";
         public string TargetEncoding = "UTF-8";
         public string SelectedFields = "";
         public bool DisplayResult = false;

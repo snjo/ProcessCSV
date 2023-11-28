@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
+using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,10 +17,16 @@ namespace ProcessCsv
         private List<MenuOption> selectTargetFileMenu = new();
         private List<MenuOption> delimiterMenu = new();
         private List<MenuOption> encodingMenu = new();
+        private List<MenuOption> errorMenu = new();
+        private List<MenuOption> headerMenu = new();
         private CsvArguments Arguments;
 
         private string argSource = "Source File";
         private string argTarget = "Target File";
+        private string argFixBadData = "Fix bad data";
+        private string argIgnoreBadData = "Ignore bad data";
+        private string argIgnoreMissingFields = "Ignore missing Fields";
+        private string argSourceHasHeaders = "Source has headers";
         private string argNone = "";
 
         public MenuResultValues MenuResult = MenuResultValues.None;
@@ -30,16 +38,18 @@ namespace ProcessCsv
 
             // re-implement the ActionShowFileMenu and remove ActionInputFileName when there's more than one option there.
             //mainMenu.Add(new MenuOption("Select source file", ActionShowFileMenu, argSource, argNone));
-            mainMenu.Add(new MenuOption("Select source file", ActionInputFileName, argSource, argNone));
             //mainMenu.Add(new MenuOption("Select target file", ActionShowFileMenu, argTarget, argNone));
+            mainMenu.Add(new MenuOption("Select source file", ActionInputFileName, argSource, argNone));
             mainMenu.Add(new MenuOption("Select target file", ActionInputFileName, argTarget, argNone));
+            
+            mainMenu.Add(new MenuOption("> Select Delimiters", ActionShowDelimiterMenu, "DELIMITERS", argNone));
+            mainMenu.Add(new MenuOption("> Select Encoding", ActionShowEncodingMenu, "ENCODING", argNone));
 
             mainMenu.Add(new MenuOption("Select Fields (Columns)", ActionSelectFields, "SELECT FIELDS", argNone));
-            mainMenu.Add(new MenuOption("Select Delimiters", ActionShowDelimiterMenu, "DELIMITERS", argNone));
-            mainMenu.Add(new MenuOption("Select Encoding", ActionShowEncodingMenu, "ENCODING", argNone));
+            mainMenu.Add(new MenuOption("New header (column) names", ActionSetHeaderText, argNone, argNone));
+            
+            mainMenu.Add(new MenuOption("> Error handling", ActionShowErrorMenu, "ERROR HANDLIG", argNone));
             mainMenu.Add(new MenuOption("Save file and Exit", ActionSaveFile, argNone, argNone));
-
-
 
             selectSourceFileMenu.Add(new MenuOption("Enter source file name manually", ActionInputFileName, argSource, argNone));
             selectTargetFileMenu.Add(new MenuOption("Enter target file name manually", ActionInputFileName, argTarget, argNone));
@@ -53,6 +63,12 @@ namespace ProcessCsv
             encodingMenu.Add(new MenuOption("Target: Set Custom encoding name", ActionSetCustomEncoding, argTarget, argNone));
             encodingMenu.Add(new MenuOption("Target: UTF-8", ActionSetEncodingPreset, argTarget, "UTF-8"));
             encodingMenu.Add(new MenuOption("Target: Latin1", ActionSetEncodingPreset, argTarget, "Latin1"));
+
+            errorMenu.Add(new MenuOption(argFixBadData, ActionFlipBool, argFixBadData, argNone));
+            errorMenu.Add(new MenuOption(argIgnoreBadData, ActionFlipBool, argIgnoreBadData, argNone));
+            errorMenu.Add(new MenuOption(argIgnoreMissingFields, ActionFlipBool, argIgnoreMissingFields, argNone));
+            errorMenu.Add(new MenuOption(argSourceHasHeaders, ActionFlipBool, argSourceHasHeaders, argNone));
+            errorMenu.Add(new MenuOption("Set field count", ActionSetFieldCount, argNone, argNone));
         }
 
         public void Start()
@@ -85,13 +101,12 @@ namespace ProcessCsv
                 Console.WriteLine("Q: Back");
             }
 
-            Console.WriteLine(Environment.NewLine + Environment.NewLine + Environment.NewLine);
-            Console.WriteLine("--------- ARGUMENTS ----------------");
+            Console.WriteLine(Environment.NewLine + Environment.NewLine);
             ShowArguments();
             Console.SetCursorPosition(0, menu.Count+2);
 
             ConsoleKeyInfo pressedKey = Console.ReadKey(true);
-            if (pressedKey.KeyChar == 'Q' || pressedKey.KeyChar == 'q')
+            if (pressedKey.Key == ConsoleKey.Q || pressedKey.Key == ConsoleKey.Escape)
             {
                 if (argument == "Main Menu")
                 {
@@ -129,7 +144,8 @@ namespace ProcessCsv
             return true; // continue showing the menu
         }
 
-        private void ArgumentFormatted(string name, string value, int padding, bool error = false)
+        int padValue = 12;
+        private void ArgumentFormatted(string name, string value, string comment, int padding, bool error = false)
         {
             ConsoleColor previousColor = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -142,59 +158,32 @@ namespace ProcessCsv
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
             }
-            Console.WriteLine(value);
+            Console.Write(value.PadRight(padValue));
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine(" " + comment);
             Console.ForegroundColor = previousColor;
         }
 
         private void ShowArguments()
         {
-            int padding = 25;
-            ArgumentFormatted("Source file", Arguments.SourceFile, padding, error: !File.Exists(Arguments.SourceFile));
-            ArgumentFormatted("Source encoding", Arguments.SourceEncoding, padding);
-            ArgumentFormatted("Source delimiter", Arguments.DelimiterRead, padding);
+            int pad = 25;
+            Console.WriteLine("ARGUMENTS ".PadRight(pad-1, '-') + " VALUE ".PadRight(padValue+1, '-') + " COMMENT ".PadRight(40,'-'));
+            ArgumentFormatted("Source file", Arguments.SourceFile, comment: "", padding: pad, error: !File.Exists(Arguments.SourceFile));
+            ArgumentFormatted("Source encoding", Arguments.SourceEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, !CheckEncoding(Arguments.SourceEncoding));
+            ArgumentFormatted("Source delimiter", GetDelimiterAlias(Arguments.DelimiterRead), comment: "Example: , ; comma semicolon tab (auto guesses based on start of file)", padding: pad);
 
-            string targetFile = Arguments.TargetFile;
-            string targetDirectory = "";
-            bool directoryExists = false;
-            if (targetFile.Length > 0)
-            {
-                Debug.WriteLine("1: targetFile length is > 0");
-                if (targetFile.Contains("\\") == false)
-                {
-                    Debug.WriteLine("File name without a directory, therefore local folder. OK");
-                    directoryExists = true;
-                }
-                else if (Directory.Exists(targetFile))
-                {
-                    Debug.WriteLine("2: Dir exists, but missing a file name");
-                    directoryExists = false;
-                }
-                else
-                {
-                    Debug.WriteLine("3: Dir does not exist with full path, getting dir");
-                    targetDirectory = Path.GetDirectoryName(targetFile);
-                    if (Directory.Exists(targetDirectory))
-                    {
-                        Debug.WriteLine("4: dir exists");
-                        directoryExists = true;
-                    }
-                }
-                
-            }
-            Debug.WriteLine(Arguments.TargetFile + "; dir is: " + targetFile + "; exists: " + directoryExists);
-
-            ArgumentFormatted("Target file", Arguments.TargetFile, padding, !directoryExists);
-            ArgumentFormatted("Target encoding", Arguments.TargetEncoding, padding);
-            ArgumentFormatted("Target delimiter", Arguments.DelimiterWrite, padding);
+            ArgumentFormatted("Target file", Arguments.TargetFile, comment: "", padding: pad, error: CheckTargetPathError());
+            ArgumentFormatted("Target encoding", Arguments.TargetEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, !CheckEncoding(Arguments.TargetEncoding));
+            ArgumentFormatted("Target delimiter", GetDelimiterAlias(Arguments.DelimiterWrite), comment: "Example: , ; comma semicolon tab (auto guesses based on start of file)", padding: pad);
             Console.WriteLine();
-            ArgumentFormatted("New headers", Arguments.NewHeaders, padding);
-            ArgumentFormatted("Source has headers", Arguments.FileHasHeaders.ToString(), padding);
-            ArgumentFormatted("Field Count", Arguments.FieldCount.ToString(), padding);
-            ArgumentFormatted("Columns Selected", Arguments.SelectedFields, padding);
-
-            ArgumentFormatted("Ignore bad data", Arguments.IgnoreBadData.ToString(), padding);
-            ArgumentFormatted("Ignore missing fields", Arguments.IgnoreMissingField.ToString(), padding);
-            ArgumentFormatted("Fix bad data", Arguments.FixBadData.ToString(), padding);
+            ArgumentFormatted("Selected Fields", Arguments.SelectedFields, comment: "Example: 0,1,4,8", padding: pad);
+            ArgumentFormatted("New headers", Arguments.NewHeaders, comment: "Example: \"Name\",\"Phone\"", padding: pad);
+            ArgumentFormatted("Source has headers", Arguments.FileHasHeaders.ToString(), comment: "False if first line has data instead of column names", padding: pad);
+            ArgumentFormatted("Field Count", Arguments.FieldCount.ToString(), comment: "0 = Autodetect. Override if Autodetect guesses wrong", padding: pad);
+            
+            ArgumentFormatted("Fix bad data", Arguments.FixBadData.ToString(), comment: "Fixes errors due to missing quotes or fields", padding: pad);
+            ArgumentFormatted("Ignore bad data", Arguments.IgnoreBadData.ToString(), comment: "Ignores incorrect quotes or delimiters", padding: pad);
+            ArgumentFormatted("Ignore missing fields", Arguments.IgnoreMissingField.ToString(), comment: "Ignores missing fields, inserts blank fields", padding: pad);
             /*
                     public bool Help = false;
                     public string SourceFile = string.Empty;
@@ -223,6 +212,69 @@ namespace ProcessCsv
             */
         }
 
+        private string GetDelimiterAlias(string delimiter)
+        {
+            if (delimiter == "\t") return "tab";
+            else return delimiter;
+        }
+
+        private bool CheckEncoding(string encoding)
+        {
+            if (encoding == null) return false;
+            if (encoding.Length == 0) return false;
+            try
+            {
+                Encoding enc = Encoding.GetEncoding(encoding);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool CheckTargetPathError()
+        {
+            string targetFile = Arguments.TargetFile;
+            string? targetDirectory;
+            bool validPath = false;
+            if (targetFile.Length > 0)
+            {
+                if (targetFile.Contains("\\") == false)
+                {
+                    if (targetFile.Contains(":") == true)
+                    {
+                        // the path contains a :, like c:test.csv. That's not OK.
+                        validPath = false;
+                    }
+                    else
+                    {
+                        // the path is the local directory, it's OK.
+                        validPath = true;
+                    }
+
+
+                }
+                else if (Directory.Exists(targetFile))
+                {
+                    // While the directory exists, we're missing a file name
+                    validPath = false;
+                }
+                else
+                {
+                    // get the directory minus the file name
+                    targetDirectory = Path.GetDirectoryName(targetFile);
+                    if (Directory.Exists(targetDirectory))
+                    {
+                        // the directory exists
+                        validPath = true;
+                    }
+                }
+            }
+            bool targetPathError = !validPath;
+            return targetPathError;
+        }
+
         private void ActionShowHelp(string argument = "", string subArgument = "")
         {
             MenuResult = MenuResultValues.Help;
@@ -242,13 +294,19 @@ namespace ProcessCsv
 
         private void ActionShowDelimiterMenu(string argument = "", string subArgument = "")
         {
-            while (ShowMenuOptions(delimiterMenu, argument)) ;
+            while (ShowMenuOptions(delimiterMenu, argument));
         }
 
         //ActionShowEncodingMenu
         private void ActionShowEncodingMenu(string argument = "", string subArgument = "")
         {
-            while (ShowMenuOptions(encodingMenu, argument)) ;
+            while (ShowMenuOptions(encodingMenu, argument));
+        }
+
+        //ActionShowErrorMenu
+        private void ActionShowErrorMenu(string argument = "", string subArgument = "")
+        {
+            while (ShowMenuOptions(errorMenu, argument));
         }
 
         private void ActionSaveFile(string argument = "", string subArgument = "")
@@ -285,8 +343,7 @@ namespace ProcessCsv
 
         private void ActionSelectFields(string argument = "", string subArgument = "")
         {
-            Console.Clear();
-            Console.Write("Enter selected Fields (example: 0,1,4,8):");
+            Console.Write("Enter selected Fields (example: 0,1,4,8): ");
             string text = Console.ReadLine()+"";
             Arguments.SelectedFields = text;
         }
@@ -299,11 +356,11 @@ namespace ProcessCsv
             string text = Console.ReadLine() + "";
             if (argument == argSource)
             {
-                Arguments.DelimiterRead = text;
+                Arguments.DelimiterRead = Tools.GetDelimiter(text);
             }
             else if (argument == argTarget)
             {
-                Arguments.DelimiterWrite = text;
+                Arguments.DelimiterWrite = Tools.GetDelimiter(text);
             }
         }
 
@@ -334,6 +391,54 @@ namespace ProcessCsv
             }
         }
 
+        private void ActionFlipBool(string argument, string subArgument)
+        {
+            Debug.WriteLine("Flipping bool: " + argument);
+            if (argument == argFixBadData)
+            {
+                Arguments.FixBadData = !Arguments.FixBadData;
+            }
+            else if (argument == argIgnoreBadData)
+            {
+                Arguments.IgnoreBadData = !Arguments.IgnoreBadData;
+            }
+            else if (argument == argIgnoreMissingFields)
+            {
+                Arguments.IgnoreMissingField = !Arguments.IgnoreMissingField;
+            }
+            else if (argument == argFixBadData)
+            {
+                Arguments.FixBadData = !Arguments.FixBadData;
+            }
+            else if (argument == argSourceHasHeaders)
+            {
+                Arguments.FileHasHeaders = !Arguments.FileHasHeaders;
+            }
+             /*
+             New headers
+             Field Count
+             */
+        }
+
+        private void ActionSetFieldCount(string argument, string subArgument)
+        {
+            Console.Write("Set custom field count: ");
+            int fieldCount = 0;
+            string fieldString = Console.ReadLine()+"";
+            int.TryParse(fieldString, out fieldCount);
+            Arguments.FieldCount = fieldCount;
+        }
+
+        private void ActionSetHeaderText(string argument, string subArgument)
+        {
+            Console.Write("Enter custom column names: ");
+            Arguments.NewHeaders = Console.ReadLine()+"";
+            if (Arguments.NewHeaders.Length > 0)
+            {
+                Arguments.ReplaceHeaders = true;
+            }
+        }
+
     }
 
     class MenuOption
@@ -353,11 +458,14 @@ namespace ProcessCsv
         }
     }
 
-    enum argumentStrings
-    {
-        SourceFile,
-        TargetFile,
-    }
+    //enum argumentStrings
+    //{
+    //    SourceFile,
+    //    TargetFile,
+    //    FixBadData,
+    //    IgnoreBadData,
+    //    IgnoreMissingFields
+    //}
 
     public enum MenuResultValues
     {

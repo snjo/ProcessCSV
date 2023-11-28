@@ -68,5 +68,24 @@ namespace ProcessCsvLibrary
             else
                 return stringList[index];
         }
+
+        public static string GetDelimiter(string? delimiterText)
+        {
+            if (delimiterText != null)
+            {
+                switch (delimiterText)
+                {
+                    case "tab":
+                        return "\t";
+                    case "comma":
+                        return ",";
+                    case "semicolon":
+                        return ";";
+                    default:
+                        return delimiterText;
+                }
+            }
+            return ",";
+        }
     }
 }

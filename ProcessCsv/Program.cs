@@ -248,7 +248,7 @@ namespace ProcessCSV
                         case "id":
                             if (commandValue != null)
                             {
-                                GetDelimiter(ref arguments.DelimiterRead, commandValue);
+                                arguments.DelimiterRead = Tools.GetDelimiter(commandValue);
                             }
                             else
                             {
@@ -259,7 +259,7 @@ namespace ProcessCSV
                         case "od":
                             if (commandValue != null)
                             {
-                                GetDelimiter(ref arguments.DelimiterWrite, commandValue);
+                                arguments.DelimiterWrite = Tools.GetDelimiter(commandValue);
                             }
                             else
                             {
@@ -361,28 +361,6 @@ namespace ProcessCSV
                 Debug.WriteLine("Assuming unspecified argument is file name: " + argument + ", but that file can't be found.");
             }
             return string.Empty;
-        }
-
-        private static void GetDelimiter(ref string delim, string? commandValue)
-        {
-            if (commandValue != null)
-            {
-                switch (commandValue)
-                {
-                    case "tab":
-                        delim = "\t";
-                        break;
-                    case "comma":
-                        delim = ",";
-                        break;
-                    case "semicolon":
-                        delim = ";";
-                        break;
-                    default:
-                        delim = commandValue;
-                        break;
-                }
-            }
         }
     }
 }
