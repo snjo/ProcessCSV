@@ -165,7 +165,8 @@ namespace ProcessCsvLibrary
                     }
                     else
                     {
-                        Messages.Warning("Error reading field " + i + " on line " + selectedLine);
+                        if (fieldIndexes[i] != -1) // ignore index errors when using -1, that's used for leaving a blank field on purpose. If someone used another out of index value, warn them.
+                            Messages.Warning("Error reading field " + i + " on line " + selectedLine + ". Field select " + fieldIndexes[i] + " is out of range.");
                     }
                     //result += record.SafeIndex(fieldIndexes[i], "*");
                     if (i < fieldIndexes.Length - 1)

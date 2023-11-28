@@ -2,7 +2,7 @@
   "profiles": {
     "ProcessCsv": {
       "commandName": "Project",
-      "commandLineArgs": "bad.csv /ex /hd /fbd"
+      "commandLineArgs": "test.csv /ex /hd /fbd /fs 1,-1,2,8"
     }
   }
 }
