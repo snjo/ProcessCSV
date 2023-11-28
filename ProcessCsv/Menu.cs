@@ -89,7 +89,7 @@ namespace ProcessCsv
             Console.WriteLine("MENU: " + argument);
             for (int i = 0; i < menu.Count; i++)
             {
-                Console.WriteLine(i + ": " + menu[i].Name);
+                Console.WriteLine((i+1) + ": " + menu[i].Name);
             }
 
             if (argument == "Main menu")
@@ -115,9 +115,6 @@ namespace ProcessCsv
                 return false; // exit the menu
             }
 
-
-            
-
             Console.WriteLine();
             int pressedNumber = 0;
             if (int.TryParse(pressedKey.KeyChar.ToString(), out pressedNumber) == false)
@@ -127,8 +124,7 @@ namespace ProcessCsv
             }
             else
             {
-                //Console.WriteLine("You pressed " + pressedNumber); //.key will show Numpad 1 as D1, use KeyChar
-                
+                pressedNumber -= 1;
                 if (pressedNumber >= 0 && pressedNumber < menu.Count) 
                 {
                     menu[pressedNumber].Action(menu[pressedNumber].Argument, menu[pressedNumber].SubArgument);
