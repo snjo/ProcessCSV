@@ -78,14 +78,19 @@ namespace ProcessCSV
                 if (arguments.DisplayResult)
                 {
                     Messages.Message(Environment.NewLine + "Displaying " + arguments.ExampleLines + " example lines from the result:" + Environment.NewLine, arguments.Quiet);
-                    string display = processor.GetResultRecordsAsText(true, arguments.ExampleLines);
+                    //if (arguments.SelectedFields.Length > 0)
+                    //{
+                    //    processor.CreateDefaultPattern();
+                    //}
+                    processor.SetPattern(arguments.SelectedFields);
+                    string display = Messages.GetResultRecordsAsText(processor.allRecords, processor.fieldIndexes, true, arguments.ExampleLines, Messages.Message, arguments.DelimiterWrite);
                     Messages.Message(display, quiet: false);
                 }
 
                 // output the contents of line 0 of the source file to console, with line number prefix
                 if (arguments.DisplayHeaders)
                 {
-                    displayHeaders(processor, arguments);
+                    Messages.displayHeaders(processor, arguments, Messages.Message);
                 }
 
                 // if the target file is specified, save
@@ -105,31 +110,7 @@ namespace ProcessCSV
             }
         }
 
-        /// <summary>
-        /// Shows a list of headers/column names based on the first line of the file.
-        /// </summary>
-        /// <param name="processor">ProcessTextFile</param>
-        /// <param name="arguments">ProcessTextFile.Arguments</param>
-        private static void displayHeaders(ProcessTextFile processor, CsvArguments arguments)
-        {
-            Messages.Message("\nDisplaying Headers from line 0 of the source file:\n", arguments.Quiet);
-            int fieldNumber = 0;
-            Field[]? fieldArray = processor.GetRecordAsArray(0);
-            if (fieldArray != null)
-            {
-                for (int i = 0; i < fieldArray.Length; i++)
-                {
-                    Field fieldName = fieldArray[i];
-                    Messages.Message(fieldNumber.ToString().PadRight(3) + ": " + fieldName.Text, quiet: false);
-                    fieldNumber++;
-                }
-            }
-            else
-            {
-                Messages.Warning("/headers: Could not get fields to display", quiet: false);
-            }
-            Messages.Message("", quiet: false); // blank line
-        }
+
 
         /// <summary>
         /// Check the command line arguments and updates the arguments in the processor

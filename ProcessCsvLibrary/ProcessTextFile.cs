@@ -26,8 +26,8 @@ namespace ProcessCsvLibrary
         public ExitDelegate Exit = Messages.ExitProgram;
 
         string[]? linesOut;
-        List<Record> allRecords = new List<Record>(); // a record is equivalent to a row in the text file       
-        int[] fieldIndexes = new int[0];
+        public List<Record> allRecords = new List<Record>(); // a record is equivalent to a row in the text file       
+        public int[] fieldIndexes = new int[0];
         //public bool recordsLoaded = false;
         private int fieldCount = 0;
         private int columnCount = 0;
@@ -70,10 +70,10 @@ namespace ProcessCsvLibrary
         /// </summary>
         /// <param name="file">the source file</param>
         /// <param name="encoding">name of an encoding</param>
-        public void LoadFile(string file, string encoding)
+        public bool LoadFile(string file, string encoding)
         {
             Encoding enc = GetEncoding(encoding);
-            LoadFile(file, enc);
+            return LoadFile(file, enc);
         }
 
         /// <summary>
@@ -147,69 +147,6 @@ namespace ProcessCsvLibrary
         }
 
         /// <summary>
-        /// Gets the contents of a single record as a single string.
-        /// </summary>
-        /// <param name="selectedLine"></param>
-        /// <returns>a single record, with quotes around each field.</returns>
-        public string GetResultRecordConcatenated(int selectedLine)
-        {
-            string result = string.Empty;
-            //Debug.WriteLine("Concat: " + fieldIndexes.Length); // TEST
-            for (int i = 0; i < fieldIndexes.Length; i++)
-            {
-                List<Field>? record = allRecords.SafeIndex((int)selectedLine, null);
-
-                if (record == null) { Debug.WriteLine("record is null"); }
-                else if (record.Count == 0) { Debug.WriteLine("record count is 0"); }
-
-                if (record != null && record.Count > 0)
-                {
-                    //Debug.WriteLine("Concat 2: " + record.SafeIndex(fieldIndexes[i], "*")); // TEST
-                    Field? field = record.SafeIndex(fieldIndexes[i]);
-                    if (field != null)
-                    {
-                        result += FixQuotes(field.Text);
-                    }
-                    else
-                    {
-                        if (fieldIndexes[i] != -1) // ignore index errors when using -1, that's used for leaving a blank field on purpose. If someone used another out of index value, warn them.
-                            Warning("Error reading field " + i + " on line " + selectedLine + ". Field select " + fieldIndexes[i] + " is out of range.", quiet: Arguments.SupressWarnings);
-                    }
-                    //result += record.SafeIndex(fieldIndexes[i], "*");
-                    if (i < fieldIndexes.Length - 1)
-                        result += Arguments.DelimiterWrite;
-                }
-                else
-                {
-                    Debug.WriteLine("getrecord error");
-                    //result += Environment.NewLine;
-                }
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the text used in Display examble record /ex
-        /// </summary>
-        /// <param name="limitNumberOfLines">If true, shows either 5 lines, or the number of lines set in maxLines</param>
-        /// <param name="maxLines">The number of records to show as an example, starting from line 0. Only used if LimitNumberOfLines is true</param>
-        /// <returns>The full text used in example output</returns>
-        public string GetResultRecordsAsText(bool limitNumberOfLines = false, int maxLines=0)
-        {
-            string result = string.Empty;
-            if (limitNumberOfLines == false)
-                maxLines = allRecords.Count;
-            for (int i = 0; i < maxLines; i++)
-            {
-                result += i.ToString().PadRight(3) + ":  ";
-                result += GetResultRecordConcatenated(i);
-                if (i < maxLines - 1)
-                    result += Environment.NewLine;
-            }
-            return result;
-        }
-
-        /// <summary>
         /// outputs a single record as an array of fields
         /// </summary>
         /// <param name="selectedLine">the line number of the record</param>
@@ -232,7 +169,7 @@ namespace ProcessCsvLibrary
         /// </summary>
         /// <param name="filename">the target file</param>
         /// <param name="encoding">encoding used for the target file</param>
-        public void SaveFile(string filename, Encoding encoding)
+        public (bool success, int linesWritten) SaveFile(string filename, Encoding encoding)
         {
             Message("Saving to file: " + filename + ", Encoding: " + encoding.EncodingName, Arguments.Quiet);
             linesOut = processLinesCSV().ToArray();
@@ -244,6 +181,7 @@ namespace ProcessCsvLibrary
                     File.WriteAllLines(filename, linesOut); // Don't add Byte order mark (0x EF BB BF) to the start of the file in UTF-8
                 else
                     File.WriteAllLines(filename, linesOut, encoding); // set custom encoding, when UTF-8 encoding is specified, byte order mark gets added automatically
+                return (true, linesOut.Length);
             }
             catch (Exception e)
             {
@@ -270,6 +208,7 @@ namespace ProcessCsvLibrary
                 }
                 Error(Environment.NewLine + errorMessage, quiet: Arguments.SupressErrors);
                 Exit(exitCode: exitCode, message: "Error saving to file: " + filename, Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
+                return (false, 0);
             }
         }
 
@@ -278,10 +217,10 @@ namespace ProcessCsvLibrary
         /// </summary>
         /// <param name="filename">target file</param>
         /// <param name="encoding">encoding used for the target file</param>
-        public void SaveFile(string filename, string encoding)
+        public (bool success, int linesWritten) SaveFile(string filename, string encoding)
         {
             Encoding enc = GetEncoding(encoding);
-            SaveFile(filename, enc);
+            return SaveFile(filename, enc);
         }
 
         /// <summary>
@@ -342,7 +281,7 @@ namespace ProcessCsvLibrary
         /// </summary>
         /// <param name="element">a text field</param>
         /// <returns>text with updated quotes</returns>
-        private static string FixQuotes(string element)
+        public  static string FixQuotes(string element)
         {
             // Any double quotes in the source file will already have been converted to single quotes by CsvHelper.
             // Before saving this out again, they must be converted back to double quotes.
@@ -454,7 +393,7 @@ namespace ProcessCsvLibrary
 
                         fieldText = RemoveSpaces(fieldText);
                         record.AddField(new Field(fieldText, record, fieldNumber));
-                        Debug.WriteLine("Added field " + fieldNumber + ": " + fieldText);
+                        //Debug.WriteLine("Added field " + fieldNumber + ": " + fieldText);
                     }
                     catch (Exception ex)
                     {
@@ -769,7 +708,7 @@ namespace ProcessCsvLibrary
         /// <param name="text"></param>
         public void SetPattern(string text)
         {
-            Debug.WriteLine("Pattern: " + text);
+            Debug.WriteLine("Pattern: " + text + ", length is " + text.Length);
             if (text.Length == 0)
             {
                 Debug.WriteLine("Setting default pattern");
@@ -796,7 +735,7 @@ namespace ProcessCsvLibrary
         /// <summary>
         /// Fills fieldIndexes with ints from 0 to n, where n is the number of fields in the file
         /// </summary>
-        private void CreateDefaultPattern()
+        public void CreateDefaultPattern()
         {
             List<int> pattern = new List<int>();
             for (int i = 0; i < fieldCount; i++)

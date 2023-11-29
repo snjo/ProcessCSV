@@ -19,7 +19,8 @@ namespace ProcessCSV
             Console.WriteLine("PROCESSCSV /l file [/s file] [/f fields] [/ie encoding] [/oe encoding]" + NL +
                 "    [/id delimiter] [/od delimiter] [/ex [number]] [/hd] [/q] [/p]" + NL);
 
-            Console.WriteLine("PROCESSCSV sourcefile targetfile [other arguments]" + NL);
+            Console.WriteLine("PROCESSCSV sourcefile targetfile [other arguments]");
+            Console.WriteLine("PROCESSCSV [No arguments] : Starts the program in menu based mode" + NL);
 
             Console.WriteLine(
                 "ARGUMENT        ALIAS      FUNCTION"                       + NL +
@@ -89,7 +90,6 @@ namespace ProcessCSV
                 Console.WriteLine(i + " : " + ((ExitCode)i).ToString());
             }
 
-            
             Messages.ExitProgram(exitCode: ExitCode.InfoShown, message: null, quiet: false, pause, exit);
         }
     } 

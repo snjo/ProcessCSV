@@ -18,7 +18,7 @@ namespace ProcessCsv
         private List<MenuOption> delimiterMenu = new();
         private List<MenuOption> encodingMenu = new();
         private List<MenuOption> errorMenu = new();
-        private List<MenuOption> headerMenu = new();
+        private List<MenuOption> outputMenu = new();
         private CsvArguments Arguments;
 
         private string argSource = "Source File";
@@ -29,11 +29,17 @@ namespace ProcessCsv
         private string argSourceHasHeaders = "Source has headers";
         private string argNone = "";
 
+        ProcessTextFile processor;
         public MenuResultValues MenuResult = MenuResultValues.None;
 
         public Menu(CsvArguments arguments)
         {
             this.Arguments = arguments;
+            processor = new ProcessTextFile(Arguments);
+            processor.Message = messageOverride;
+            processor.Warning = warningOverride;
+            processor.Error = warningOverride;
+            processor.Exit = exitOverride;
             mainMenu.Add(new MenuOption("Help", ActionShowHelp));
 
             // re-implement the ActionShowFileMenu and remove ActionInputFileName when there's more than one option there.
@@ -49,7 +55,8 @@ namespace ProcessCsv
             mainMenu.Add(new MenuOption("New header (column) names", ActionSetHeaderText, argNone, argNone));
             
             mainMenu.Add(new MenuOption("> Error handling", ActionShowErrorMenu, "ERROR HANDLIG", argNone));
-            mainMenu.Add(new MenuOption("Save file and Exit", ActionSaveFile, argNone, argNone));
+            mainMenu.Add(new MenuOption("> Output (Save or display result)", ActionShowOutputMenu, "OUTPUT", argNone));
+            
 
             selectSourceFileMenu.Add(new MenuOption("Enter source file name manually", ActionInputFileName, argSource, argNone));
             selectTargetFileMenu.Add(new MenuOption("Enter target file name manually", ActionInputFileName, argTarget, argNone));
@@ -69,11 +76,46 @@ namespace ProcessCsv
             errorMenu.Add(new MenuOption(argIgnoreMissingFields, ActionFlipBool, argIgnoreMissingFields, argNone));
             errorMenu.Add(new MenuOption(argSourceHasHeaders, ActionFlipBool, argSourceHasHeaders, argNone));
             errorMenu.Add(new MenuOption("Set field count", ActionSetFieldCount, argNone, argNone));
+
+            outputMenu.Add(new MenuOption("Display file headers", ActionDisplayHeaders, argNone, argNone));
+            outputMenu.Add(new MenuOption("Display example lines", ActionDisplayExample, argNone, argNone));
+            outputMenu.Add(new MenuOption("Save file and Exit", ActionSaveFile, argNone, argNone));
+        }
+
+        private void messageOverride(string message, bool quiet)
+        {
+            Console.WriteLine(message);
+            Debug.WriteLine(message);
+        }
+        private void warningOverride(string message, bool quiet)
+        {
+            //Console.WriteLine(message);
+            Debug.WriteLine(message);
+        }
+        private void exitOverride(ExitCode exitCode, string? message, bool quiet, bool pause, bool exit)
+        {
+            Console.WriteLine(message);
+            Debug.WriteLine(message);
         }
 
         public void Start()
-        {   
-            while (ShowMenuOptions(mainMenu, "Main menu"));
+        {
+            //ConsoleColor startColor = Console.ForegroundColor;
+            //ConsoleColor c1 = ConsoleColor.Green;
+            //ConsoleColor c2 = ConsoleColor.Magenta;
+            //Console.ForegroundColor = c1;
+            bool resume = true;
+            while (resume)
+            {
+                //if (Console.ForegroundColor == c1)
+                //    Console.ForegroundColor = c2;
+                //else
+                //    Console.ForegroundColor = c1;
+                //Console.Clear();
+                Debug.WriteLine("Resuming Main menu");
+               
+                resume = ShowMenuOptions(mainMenu, "Main menu");
+            }
             Console.Clear();
         }
 
@@ -85,8 +127,12 @@ namespace ProcessCsv
                 return false;
             }
 
+            //Console.SetCursorPosition(0, 0);
             Console.Clear();
-            Console.WriteLine("MENU: " + argument);
+
+            //Console.WriteLine("TEST");
+            Console.WriteLine("MENU: " + argument);// + " " + DateTime.Now.ToLongTimeString());
+            
             for (int i = 0; i < menu.Count; i++)
             {
                 Console.WriteLine((i+1) + ": " + menu[i].Name);
@@ -101,7 +147,7 @@ namespace ProcessCsv
                 Console.WriteLine("Q: Back");
             }
 
-            Console.WriteLine(Environment.NewLine + Environment.NewLine);
+            Console.WriteLine(Environment.NewLine);
             ShowArguments();
             Console.SetCursorPosition(0, menu.Count+2);
 
@@ -141,42 +187,62 @@ namespace ProcessCsv
         }
 
         int padValue = 12;
-        private void ArgumentFormatted(string name, string value, string comment, int padding, bool error = false)
+        private void ArgumentFormatted(string name, string value, string comment, int padding, ErrorType error = ErrorType.Normal)
         {
             ConsoleColor previousColor = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Write(name.PadRight(padding, ' '));
-            if (error)
+            switch (error)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
+                case ErrorType.Normal:
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                    break;
+                case ErrorType.Warning:
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    break;
+                case ErrorType.Error:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    break;
+                case ErrorType.Information:
+                    Console.ForegroundColor = ConsoleColor.Blue;
+                    break;
+                default:
+                    Console.ForegroundColor = previousColor; 
+                    break;
             }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-            }
+                
             Console.Write(value.PadRight(padValue));
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine(" " + comment);
             Console.ForegroundColor = previousColor;
         }
 
+        private enum ErrorType
+        {
+            Normal,
+            Error,
+            Warning,
+            Information,
+        }
+
         private void ShowArguments()
         {
             int pad = 25;
-            Console.WriteLine("ARGUMENTS ".PadRight(pad-1, '-') + " VALUE ".PadRight(padValue+1, '-') + " COMMENT ".PadRight(40,'-'));
-            ArgumentFormatted("Source file", Arguments.SourceFile, comment: "", padding: pad, error: !File.Exists(Arguments.SourceFile));
-            ArgumentFormatted("Source encoding", Arguments.SourceEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, !CheckEncoding(Arguments.SourceEncoding));
+            Console.WriteLine("ARGUMENTS ".PadRight(pad - 1, '-') + " VALUE ".PadRight(padValue + 1, '-') + " COMMENT ".PadRight(40, '-'));
+            ArgumentFormatted("Source file", Arguments.SourceFile, comment: "", padding: pad, error: File.Exists(Arguments.SourceFile) ? ErrorType.Normal : ErrorType.Error);
+
+            ArgumentFormatted("Source encoding", Arguments.SourceEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, GetEncodingType(Arguments.SourceEncoding));
             ArgumentFormatted("Source delimiter", GetDelimiterAlias(Arguments.DelimiterRead), comment: "Example: , ; comma semicolon tab (auto guesses based on start of file)", padding: pad);
 
             ArgumentFormatted("Target file", Arguments.TargetFile, comment: "", padding: pad, error: CheckTargetPathError());
-            ArgumentFormatted("Target encoding", Arguments.TargetEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, !CheckEncoding(Arguments.TargetEncoding));
+            ArgumentFormatted("Target encoding", Arguments.TargetEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, GetEncodingType(Arguments.TargetEncoding));
             ArgumentFormatted("Target delimiter", GetDelimiterAlias(Arguments.DelimiterWrite), comment: "Example: , ; comma semicolon tab (auto guesses based on start of file)", padding: pad);
-            Console.WriteLine();
+
             ArgumentFormatted("Selected Fields", Arguments.SelectedFields, comment: "Example: 0,1,4,8", padding: pad);
             ArgumentFormatted("New headers", Arguments.NewHeaders, comment: "Example: \"Name\",\"Phone\"", padding: pad);
             ArgumentFormatted("Source has headers", Arguments.FileHasHeaders.ToString(), comment: "False if first line has data instead of column names", padding: pad);
             ArgumentFormatted("Field Count", Arguments.FieldCount.ToString(), comment: "0 = Autodetect. Override if Autodetect guesses wrong", padding: pad);
-            
+
             ArgumentFormatted("Fix bad data", Arguments.FixBadData.ToString(), comment: "Fixes errors due to missing quotes or fields", padding: pad);
             ArgumentFormatted("Ignore bad data", Arguments.IgnoreBadData.ToString(), comment: "Ignores incorrect quotes or delimiters", padding: pad);
             ArgumentFormatted("Ignore missing fields", Arguments.IgnoreMissingField.ToString(), comment: "Ignores missing fields, inserts blank fields", padding: pad);
@@ -208,6 +274,14 @@ namespace ProcessCsv
             */
         }
 
+        private ErrorType GetEncodingType(string encoding)
+        {
+            if (int.TryParse(encoding, out int x))
+                return ErrorType.Information;
+            else
+                return CheckEncoding(Arguments.SourceEncoding) ? ErrorType.Normal : ErrorType.Error;
+        }
+
         private string GetDelimiterAlias(string delimiter)
         {
             if (delimiter == "\t") return "tab";
@@ -229,7 +303,7 @@ namespace ProcessCsv
             }
         }
 
-        private bool CheckTargetPathError()
+        private ErrorType CheckTargetPathError()
         {
             string targetFile = Arguments.TargetFile;
             string? targetDirectory;
@@ -267,8 +341,8 @@ namespace ProcessCsv
                     }
                 }
             }
-            bool targetPathError = !validPath;
-            return targetPathError;
+            if (validPath) return ErrorType.Normal;
+            else return ErrorType.Error;            
         }
 
         private void ActionShowHelp(string argument = "", string subArgument = "")
@@ -305,9 +379,35 @@ namespace ProcessCsv
             while (ShowMenuOptions(errorMenu, argument));
         }
 
+        private void ActionShowOutputMenu(string argument = "", string subArgument = "")
+        {
+            while (ShowMenuOptions(outputMenu, argument));
+        }
+
         private void ActionSaveFile(string argument = "", string subArgument = "")
         {
-            MenuResult = MenuResultValues.SaveFile;
+            Console.Clear();
+            if (processor.LoadFile(Arguments.SourceFile, Arguments.SourceEncoding))
+            {
+                int linesWritten = 0;
+                bool success = false;
+                
+                (success, linesWritten) = processor.SaveFile(Arguments.TargetFile, Arguments.TargetEncoding);
+                if (success)
+                {
+                    Console.WriteLine(linesWritten + " lines written to \"" + Arguments.TargetFile + "\"");
+                }
+                else
+                {
+                    Console.WriteLine("Could not write to file \"" + Arguments.TargetFile + "\"");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Could not load file \"" + Arguments.SourceFile + "\"");
+            }
+            Console.ReadKey();
+            //MenuResult = MenuResultValues.SaveFile;
         }
 
         private void ActionInputFileName(string argument, string subArgument = "")
@@ -433,6 +533,27 @@ namespace ProcessCsv
             {
                 Arguments.ReplaceHeaders = true;
             }
+        }
+
+        private void ActionDisplayExample(string argument, string subArgument)
+        {
+            Console.Clear();
+            
+            processor.LoadFile(Arguments.SourceFile, Arguments.SourceEncoding);
+            processor.SetPattern(Arguments.SelectedFields);
+            Console.WriteLine(Environment.NewLine + "Displaying " + Arguments.ExampleLines + " example lines from the result:" + Environment.NewLine, Arguments.Quiet);
+            string display = Messages.GetResultRecordsAsText(processor.allRecords, processor.fieldIndexes, true, Arguments.ExampleLines, Messages.Message, Arguments.DelimiterWrite);
+            Console.WriteLine(display);
+
+            Console.ReadKey();
+        }
+
+        private void ActionDisplayHeaders(string argument, string subArgument)
+        {
+            Console.Clear();
+            processor.LoadFile(Arguments.SourceFile, Arguments.SourceEncoding);
+            Messages.displayHeaders(processor, Arguments, messageOverride);
+            Console.ReadKey();
         }
 
     }
