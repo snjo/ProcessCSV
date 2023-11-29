@@ -122,7 +122,7 @@ namespace ProcessCsvLibrary
                     {
                         Exit(ExitCode.InvalidEncoding, "Error parsing encoding " + encodingName, Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
                         return Encoding.UTF8; // should be unreachable
-                    }   
+                    }
             }
         }
 
@@ -243,7 +243,7 @@ namespace ProcessCsvLibrary
             return illegalFound;
         }
 
-        
+
         /// <summary>
         /// Prepares the lines to save to the target file
         /// </summary>
@@ -260,7 +260,8 @@ namespace ProcessCsvLibrary
                 {
                     Field? field = lineArray.SafeIndex((int)fieldIndexes[f]);
                     string element = string.Empty;
-                    if (field != null) {
+                    if (field != null)
+                    {
                         element = field.Text;
                     }
                     element = FixQuotes(element);
@@ -281,11 +282,11 @@ namespace ProcessCsvLibrary
         /// </summary>
         /// <param name="element">a text field</param>
         /// <returns>text with updated quotes</returns>
-        public  static string FixQuotes(string element)
+        public static string FixQuotes(string element)
         {
             // Any double quotes in the source file will already have been converted to single quotes by CsvHelper.
             // Before saving this out again, they must be converted back to double quotes.
-            if (element.Contains("\"")) 
+            if (element.Contains("\""))
             {
                 //Debug.WriteLine("Replacing quote in: " + element);
                 element = element.Replace("\"", "\"\"");
@@ -314,7 +315,7 @@ namespace ProcessCsvLibrary
         {
             int linesLoadedFromCSV = 0;
             Debug.WriteLine("Get all fields in " + filename + " with encoding " + encoding.EncodingName);
-            
+
             StreamReader reader;
             try
             {
@@ -331,15 +332,15 @@ namespace ProcessCsvLibrary
             {
                 Arguments.DelimiterRead = AutoDetectDelimiter();
             }
-            
+
             // Set up CsvHelper
             var config = new CsvConfiguration(CultureInfo.CurrentCulture);
             config.Delimiter = Arguments.DelimiterRead;
             config.Encoding = encoding;
-            if (Arguments.IgnoreBadData) 
-                { config.BadDataFound = null; }
+            if (Arguments.IgnoreBadData)
+            { config.BadDataFound = null; }
             if (Arguments.IgnoreMissingField)
-                { config.MissingFieldFound = null; }
+            { config.MissingFieldFound = null; }
 
             // Get time to see the time it took to process the file.
             DateTime time = DateTime.Now;
@@ -368,7 +369,7 @@ namespace ProcessCsvLibrary
 
 
             Message("Loaded " + linesLoadedFromCSV + " lines from: " + Path.GetFileName(filename) + " in " + span.TotalSeconds + " seconds", Arguments.Quiet);
-                
+
         }
 
         /// <summary>
@@ -442,8 +443,8 @@ namespace ProcessCsvLibrary
                 lineNumber++;
             }
 
-            
-            
+
+
             if (Arguments.ReplaceHeaders)
             {
                 ChangeColumnNames();
@@ -512,9 +513,9 @@ namespace ProcessCsvLibrary
             else if (newHeaders.Count < fieldCount)
             {
                 Warning("Too few headers in New Headers argument, expected " + fieldCount + ". Extra headers will be insterted with generic name.", quiet: Arguments.SupressWarnings);
-                for (int i = newHeaders.Count-1; i < fieldCount; i++)
+                for (int i = newHeaders.Count - 1; i < fieldCount; i++)
                 {
-                    newHeaders.Add("Column " + (i+1));
+                    newHeaders.Add("Column " + (i + 1));
                 }
             }
             for (int i = 0; i < newHeaders.Count; i++)
@@ -696,7 +697,7 @@ namespace ProcessCsvLibrary
         /// <param name="tab">the number of tabs in the text</param>
         private void CountAllDelimiterTypes(string text, out int comma, out int semicolon, out int tab)
         {
-            comma = (countDelimiter(",", text)) -1 ;
+            comma = (countDelimiter(",", text)) - 1;
             semicolon = (countDelimiter(";", text)) - 1;
             tab = (countDelimiter("\t", text)) - 1;
             Message("Delimiters detected: comma: " + comma + " semicolon:" + semicolon + " tab: " + tab, Arguments.Quiet);

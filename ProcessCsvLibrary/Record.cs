@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ProcessCsvLibrary
+﻿namespace ProcessCsvLibrary
 {
     /// <summary>
     /// A record is a row in from the text file

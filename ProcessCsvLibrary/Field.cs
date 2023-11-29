@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ProcessCsvLibrary
+﻿namespace ProcessCsvLibrary
 {
     /// <summary>
     /// A Field is equivalent to the contents of a column on a single row
@@ -19,7 +12,7 @@ namespace ProcessCsvLibrary
         public Record ParentRecord;
         public int ColumnNumber;
         public Field(string text, Record parent, int columnNumber)
-        { 
+        {
             Text = text;
             ParentRecord = parent;
             ColumnNumber = columnNumber;

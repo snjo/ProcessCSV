@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
 namespace ProcessCsvLibrary;
 
 public class Messages
-{ 
+{
     public static void Message(string message, bool quiet)
     {
         if (quiet == false)
@@ -115,10 +110,12 @@ public class Messages
         {
             List<Field>? record = records.SafeIndex((int)selectedLine, null);
 
-            if (record == null) {
+            if (record == null)
+            {
                 Debug.WriteLine("getrecord error, null: " + (record == null) + ", selectedLine: " + selectedLine + ", field " + i);
             }
-            else if (record.Count == 0) { 
+            else if (record.Count == 0)
+            {
                 Debug.WriteLine("record count is 0");
             }
 
@@ -163,7 +160,7 @@ public class Messages
         string result = string.Empty;
         if (limitNumberOfLines == false)
             maxLines = records.Count;
-        for (int i = 0; i < Math.Min(maxLines,records.Count); i++)
+        for (int i = 0; i < Math.Min(maxLines, records.Count); i++)
         {
             result += i.ToString().PadRight(3) + ":  ";
             result += GetResultRecordConcatenated(records, selectedFields, i, messenger, delimiterWrite);

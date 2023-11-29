@@ -3,11 +3,10 @@
 // Uses CsvHelper by Josh Close
 // https://joshclose.github.io/CsvHelper/
 
-using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
 using ProcessCsv;
 using ProcessCsvLibrary;
+using System.Diagnostics;
+using System.Text;
 
 namespace ProcessCSV
 {
@@ -54,7 +53,7 @@ namespace ProcessCSV
                 // convert command line arguments, must happen before processing starts
                 processArgs(commandLineArgs, processor.Arguments);
             }
-            
+
             //processArgs(commandLineArgs, processor.Arguments);
             CsvArguments arguments = processor.Arguments;
 
@@ -67,7 +66,7 @@ namespace ProcessCSV
             {
                 HelpOutput.helpText(arguments.Pause, exit: true);
             }
-            
+
             // if a source file is specified, load
             if (arguments.SourceFile.Length > 0)
             {
@@ -119,7 +118,7 @@ namespace ProcessCSV
         /// <param name="arguments">the Arguments object of ProcessTextFile</param>
         private static void processArgs(string[] commandLineArgs, CsvArguments arguments)
         {
-            
+
             if (commandLineArgs.Length > 1) // check if the first and second argument are file names
             {
                 arguments.SourceFile = AssumeFileNameFromArgument(commandLineArgs[0], checkFileExists: true);
@@ -198,7 +197,7 @@ namespace ProcessCSV
                         case "outencoding":
                         case "oe":
                             if (commandValue != null)
-                            { 
+                            {
                                 arguments.TargetEncoding = commandValue;
                             }
                             else
@@ -209,7 +208,7 @@ namespace ProcessCSV
                         case "fieldselect":
                         case "fs":
                             if (commandValue != null)
-                            { 
+                            {
                                 arguments.SelectedFields = commandValue;
                             }
                             else
@@ -304,7 +303,7 @@ namespace ProcessCSV
                         default:
                             Messages.ExitProgram(exitCode: ExitCode.InvalidArgument, "Invalid argument passed: /" + commandType, arguments.SupressErrors, arguments.Pause, exit: true);
                             break;
-                            
+
                     }
 
                     //check conflicting arguments
