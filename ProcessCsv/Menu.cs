@@ -40,7 +40,7 @@ namespace ProcessCsv
             processor.Warning = warningOverride;
             processor.Error = warningOverride;
             processor.Exit = exitOverride;
-            mainMenu.Add(new MenuOption("Help", ActionShowHelp));
+            mainMenu.Add(new MenuOption("Help", ActionShowHelp,argNone,argNone,ConsoleColor.White));
 
             // re-implement the ActionShowFileMenu and remove ActionInputFileName when there's more than one option there.
             //mainMenu.Add(new MenuOption("Select source file", ActionShowFileMenu, argSource, argNone));
@@ -48,14 +48,14 @@ namespace ProcessCsv
             mainMenu.Add(new MenuOption("Select source file", ActionInputFileName, argSource, argNone));
             mainMenu.Add(new MenuOption("Select target file", ActionInputFileName, argTarget, argNone));
             
-            mainMenu.Add(new MenuOption("> Select Delimiters", ActionShowDelimiterMenu, "DELIMITERS", argNone));
-            mainMenu.Add(new MenuOption("> Select Encoding", ActionShowEncodingMenu, "ENCODING", argNone));
+            mainMenu.Add(new MenuOption("> Select Delimiters", ActionShowDelimiterMenu, "Delimiters", argNone, ConsoleColor.DarkCyan));
+            mainMenu.Add(new MenuOption("> Select Encoding", ActionShowEncodingMenu, "Encoding", argNone, ConsoleColor.Magenta));
 
-            mainMenu.Add(new MenuOption("Select Fields (columns)", ActionSelectFields, "SELECT FIELDS", argNone));
+            mainMenu.Add(new MenuOption("Select Fields (columns)", ActionSelectFields, "Select fields", argNone));
             mainMenu.Add(new MenuOption("New header (column) names", ActionSetHeaderText, argNone, argNone));
             
-            mainMenu.Add(new MenuOption("> Error handling", ActionShowErrorMenu, "ERROR HANDLIG", argNone));
-            mainMenu.Add(new MenuOption("> Output (Save or display result)", ActionShowOutputMenu, "OUTPUT", argNone));
+            mainMenu.Add(new MenuOption("> Error handling", ActionShowErrorMenu, "Error handling", argNone, ConsoleColor.Yellow));
+            mainMenu.Add(new MenuOption("> Output (Save or display result)", ActionShowOutputMenu, "Output", argNone));
             
 
             selectSourceFileMenu.Add(new MenuOption("Enter source file name manually", ActionInputFileName, argSource, argNone));
@@ -100,20 +100,10 @@ namespace ProcessCsv
 
         public void Start()
         {
-            //ConsoleColor startColor = Console.ForegroundColor;
-            //ConsoleColor c1 = ConsoleColor.Green;
-            //ConsoleColor c2 = ConsoleColor.Magenta;
-            //Console.ForegroundColor = c1;
             bool resume = true;
             while (resume)
             {
-                //if (Console.ForegroundColor == c1)
-                //    Console.ForegroundColor = c2;
-                //else
-                //    Console.ForegroundColor = c1;
-                //Console.Clear();
                 Debug.WriteLine("Resuming Main menu");
-               
                 resume = ShowMenuOptions(mainMenu, "Main menu");
             }
             Console.Clear();
@@ -121,6 +111,7 @@ namespace ProcessCsv
 
         private bool ShowMenuOptions(List<MenuOption> menu, string argument = "")
         {
+            ConsoleColor previousColor = Console.ForegroundColor;
             if (MenuResult != MenuResultValues.None)
             {
                 // user has selected to save and exit or quit.
@@ -131,11 +122,13 @@ namespace ProcessCsv
             Console.Clear();
 
             //Console.WriteLine("TEST");
-            Console.WriteLine("MENU: " + argument);// + " " + DateTime.Now.ToLongTimeString());
+            Console.WriteLine("--- " + argument + " ---");// + " " + DateTime.Now.ToLongTimeString());
             
             for (int i = 0; i < menu.Count; i++)
             {
+                Console.ForegroundColor = menu[i].Color;
                 Console.WriteLine((i+1) + ": " + menu[i].Name);
+                Console.ForegroundColor = previousColor;
             }
 
             if (argument == "Main menu")
@@ -187,10 +180,10 @@ namespace ProcessCsv
         }
 
         int padValue = 12;
-        private void ArgumentFormatted(string name, string value, string comment, int padding, ErrorType error = ErrorType.Normal)
+        private void ArgumentFormatted(string name, string value, string comment, int padding, ErrorType error = ErrorType.Normal, ConsoleColor nameColor = ConsoleColor.Cyan)
         {
             ConsoleColor previousColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.ForegroundColor = nameColor;
             Console.Write(name.PadRight(padding, ' '));
             switch (error)
             {
@@ -238,23 +231,25 @@ namespace ProcessCsv
             //if (Console.GetCursorPosition().Top < 10)
             Console.SetCursorPosition(0,14);
             Console.WriteLine("ARGUMENTS ".PadRight(pad - 1, '-') + " VALUE ".PadRight(padValue + 1, '-') + " COMMENT ".PadRight(40, '-'));
-            ArgumentFormatted("Source file", Arguments.SourceFile, comment: "Full or relative path of the file to load", padding: pad, error: File.Exists(Arguments.SourceFile) ? ErrorType.Normal : ErrorType.Error);
 
-            ArgumentFormatted("Source encoding", Arguments.SourceEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, GetEncodingType(Arguments.SourceEncoding));
-            ArgumentFormatted("Source delimiter", GetDelimiterAlias(Arguments.DelimiterRead), comment: "Example: , ; comma semicolon tab (auto guesses based on start of file)", padding: pad);
+            ArgumentFormatted("Source file", Arguments.SourceFile, comment: "Full or relative path of the file to load", padding: pad, error: File.Exists(Arguments.SourceFile) ? ErrorType.Normal : ErrorType.Error);
+            ArgumentFormatted("Source delimiter", GetDelimiterAlias(Arguments.DelimiterRead), comment: "Example: , ; comma semicolon tab (auto guesses based on start of file)", padding: pad, ErrorType.Normal, ConsoleColor.DarkCyan);
+            ArgumentFormatted("Source encoding", Arguments.SourceEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, GetEncodingType(Arguments.SourceEncoding), ConsoleColor.Magenta);
+            
 
             ArgumentFormatted("Target file", Arguments.TargetFile, comment: "Full or relative path of the file to save to", padding: pad, error: CheckTargetPathError());
-            ArgumentFormatted("Target encoding", Arguments.TargetEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, GetEncodingType(Arguments.TargetEncoding));
-            ArgumentFormatted("Target delimiter", GetDelimiterAlias(Arguments.DelimiterWrite), comment: "Example: , ; comma semicolon tab (auto guesses based on start of file)", padding: pad);
+            ArgumentFormatted("Target delimiter", GetDelimiterAlias(Arguments.DelimiterWrite), comment: "Example: , ; comma semicolon tab (auto guesses based on start of file)", padding: pad, ErrorType.Normal, ConsoleColor.DarkCyan);
+            ArgumentFormatted("Target encoding", Arguments.TargetEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, GetEncodingType(Arguments.TargetEncoding), ConsoleColor.Magenta);
+            
 
             ArgumentFormatted("Selected Fields", Arguments.SelectedFields, comment: "Blank = Show all fields/columns. Example: 0,1,4,8.", padding: pad);
-            ArgumentFormatted("New headers", Arguments.NewHeaders, comment: "Replace header (column) names on first line. Example: \"Name\",\"Phone\"", padding: pad);
-            ArgumentFormatted("Source has headers", Arguments.FileHasHeaders.ToString(), comment: "False if first line has data instead of header (column) names", padding: pad);
             ArgumentFormatted("Field Count", Arguments.FieldCount.ToString(), comment: "0 = Autodetect. Override if Autodetect guesses wrong", padding: pad);
+            ArgumentFormatted("New headers", Arguments.NewHeaders, comment: "Replace header (column) names on first line. Example: \"Name\",\"Phone\"", padding: pad);
 
-            ArgumentFormatted("Fix bad data", Arguments.FixBadData.ToString(), comment: "Fixes errors due to missing quotes or fields", padding: pad);
-            ArgumentFormatted("Ignore bad data", Arguments.IgnoreBadData.ToString(), comment: "Ignores incorrect quotes or delimiters", padding: pad);
-            ArgumentFormatted("Ignore missing fields", Arguments.IgnoreMissingField.ToString(), comment: "Ignores missing fields, inserts blank fields", padding: pad);
+            ArgumentFormatted("Source has headers", Arguments.FileHasHeaders.ToString(), comment: "False if first line has data instead of header (column) names", padding: pad, ErrorType.Normal, ConsoleColor.Yellow);
+            ArgumentFormatted("Fix bad data", Arguments.FixBadData.ToString(), comment: "Fixes errors due to missing quotes or fields", padding: pad, ErrorType.Normal, ConsoleColor.Yellow);
+            ArgumentFormatted("Ignore bad data", Arguments.IgnoreBadData.ToString(), comment: "Ignores incorrect quotes or delimiters", padding: pad, ErrorType.Normal, ConsoleColor.Yellow);
+            ArgumentFormatted("Ignore missing fields", Arguments.IgnoreMissingField.ToString(), comment: "Ignores missing fields, inserts blank fields", padding: pad, ErrorType.Normal, ConsoleColor.Yellow);
             /*
                     public bool Help = false;
                     public string SourceFile = string.Empty;
@@ -574,13 +569,15 @@ namespace ProcessCsv
         public ActionDelegate Action;
         public string Argument;
         public string SubArgument;
+        public ConsoleColor Color;
 
-        public MenuOption(string name, ActionDelegate action, string argument = "", string subArgument = "")
+        public MenuOption(string name, ActionDelegate action, string argument = "", string subArgument = "", ConsoleColor color = ConsoleColor.Cyan)
         {
             Name = name;
             Action = action;
             Argument = argument;
             SubArgument = subArgument;
+            Color = color;
         }
     }
 
