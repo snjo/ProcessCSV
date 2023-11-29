@@ -51,7 +51,7 @@ namespace ProcessCsv
             mainMenu.Add(new MenuOption("> Select Delimiters", ActionShowDelimiterMenu, "DELIMITERS", argNone));
             mainMenu.Add(new MenuOption("> Select Encoding", ActionShowEncodingMenu, "ENCODING", argNone));
 
-            mainMenu.Add(new MenuOption("Select Fields (Columns)", ActionSelectFields, "SELECT FIELDS", argNone));
+            mainMenu.Add(new MenuOption("Select Fields (columns)", ActionSelectFields, "SELECT FIELDS", argNone));
             mainMenu.Add(new MenuOption("New header (column) names", ActionSetHeaderText, argNone, argNone));
             
             mainMenu.Add(new MenuOption("> Error handling", ActionShowErrorMenu, "ERROR HANDLIG", argNone));
@@ -213,7 +213,14 @@ namespace ProcessCsv
                 
             Console.Write(value.PadRight(padValue));
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(" " + comment);
+            if (value.Length < padValue)
+            {
+                Console.WriteLine(" " + comment);
+            }
+            else
+            {
+                Console.WriteLine();
+            }
             Console.ForegroundColor = previousColor;
         }
 
@@ -228,19 +235,21 @@ namespace ProcessCsv
         private void ShowArguments()
         {
             int pad = 25;
+            //if (Console.GetCursorPosition().Top < 10)
+            Console.SetCursorPosition(0,14);
             Console.WriteLine("ARGUMENTS ".PadRight(pad - 1, '-') + " VALUE ".PadRight(padValue + 1, '-') + " COMMENT ".PadRight(40, '-'));
-            ArgumentFormatted("Source file", Arguments.SourceFile, comment: "", padding: pad, error: File.Exists(Arguments.SourceFile) ? ErrorType.Normal : ErrorType.Error);
+            ArgumentFormatted("Source file", Arguments.SourceFile, comment: "Full or relative path of the file to load", padding: pad, error: File.Exists(Arguments.SourceFile) ? ErrorType.Normal : ErrorType.Error);
 
             ArgumentFormatted("Source encoding", Arguments.SourceEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, GetEncodingType(Arguments.SourceEncoding));
             ArgumentFormatted("Source delimiter", GetDelimiterAlias(Arguments.DelimiterRead), comment: "Example: , ; comma semicolon tab (auto guesses based on start of file)", padding: pad);
 
-            ArgumentFormatted("Target file", Arguments.TargetFile, comment: "", padding: pad, error: CheckTargetPathError());
+            ArgumentFormatted("Target file", Arguments.TargetFile, comment: "Full or relative path of the file to save to", padding: pad, error: CheckTargetPathError());
             ArgumentFormatted("Target encoding", Arguments.TargetEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, GetEncodingType(Arguments.TargetEncoding));
             ArgumentFormatted("Target delimiter", GetDelimiterAlias(Arguments.DelimiterWrite), comment: "Example: , ; comma semicolon tab (auto guesses based on start of file)", padding: pad);
 
-            ArgumentFormatted("Selected Fields", Arguments.SelectedFields, comment: "Example: 0,1,4,8", padding: pad);
-            ArgumentFormatted("New headers", Arguments.NewHeaders, comment: "Example: \"Name\",\"Phone\"", padding: pad);
-            ArgumentFormatted("Source has headers", Arguments.FileHasHeaders.ToString(), comment: "False if first line has data instead of column names", padding: pad);
+            ArgumentFormatted("Selected Fields", Arguments.SelectedFields, comment: "Blank = Show all fields/columns. Example: 0,1,4,8.", padding: pad);
+            ArgumentFormatted("New headers", Arguments.NewHeaders, comment: "Replace header (column) names on first line. Example: \"Name\",\"Phone\"", padding: pad);
+            ArgumentFormatted("Source has headers", Arguments.FileHasHeaders.ToString(), comment: "False if first line has data instead of header (column) names", padding: pad);
             ArgumentFormatted("Field Count", Arguments.FieldCount.ToString(), comment: "0 = Autodetect. Override if Autodetect guesses wrong", padding: pad);
 
             ArgumentFormatted("Fix bad data", Arguments.FixBadData.ToString(), comment: "Fixes errors due to missing quotes or fields", padding: pad);
