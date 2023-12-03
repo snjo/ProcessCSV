@@ -7,9 +7,9 @@ namespace ProcessCSV
         private static string NL = Environment.NewLine;
         public static void helpText(bool pause, bool exit)
         {
-            Console.WriteLine(NL + "Processes a CSV file to remove unwanted columns, change delimiter, encoding or inspect contents" + NL);
+            Console.WriteLine(NL + "Processes a CSV file to remove unwanted fields, change delimiter, encoding or inspect contents" + NL);
 
-            Console.WriteLine("PROCESSCSV /l file [/s file] [/cs columns] [/ie encoding] [/oe encoding]" + NL +
+            Console.WriteLine("PROCESSCSV /l file [/s file] [/f fields] [/ie encoding] [/oe encoding]" + NL +
                 "    [/id delimiter] [/od delimiter] [/ex [number]] [/hd] [/q] [/p]" + NL);
 
             Console.WriteLine("PROCESSCSV sourcefile targetfile [other arguments]");
@@ -30,15 +30,15 @@ namespace ProcessCSV
                 "                           Example encodings: UTF-8, UTF-8-BOM, LATIN1, ASCII, 865" + NL +
                 "                           Example: /ie Latin1 /oe UTF8" + NL +
                 "" + NL +
-                "/columnselect   /cs        Select columns in the CSV to keep in the target file." + NL +
-                "                           If unspecified, all columns will be output." + NL +
-                "                           Columns set to -1 will be empty." + NL +
-                "                           Example: /cs 0,-1,-1,21,8" + NL +
+                "/fieldselect    /fs        Select fields (columns) in the CSV to keep in the target file." + NL +
+                "                           If unspecified, all fields will be output." + NL +
+                "                           Field set to -1 will be empty." + NL +
+                "                           Example: /f 0,-1,-1,21,8" + NL +
                 NL +
-                "/columncount    /cc        Manually specify the number of columns (fields) in the file." + NL +
-                "                           Missing columns (fields) on a line will be added as empty values." + NL +
-                "                           If not used, column count is guessed by the number of delimiters found on line 0 and 1" + NL +
-                "                           Example: /cc 4" + NL +
+                "/fieldcount     /fc        Manually specify the number of field (columns) in the file." + NL +
+                "                           Missing fields on a line will be added as empty values." + NL +
+                "                           If not used, field count is guessed by the number of delimiters found on line 0 and 1" + NL +
+                "                           Example: /fc 4" + NL +
                 NL +
                 "/example        /ex        Lists a number of lines from the start of the file. (Default is 5 lines)" + NL +
                 "                           Example: /ex 10" + NL +
@@ -49,8 +49,8 @@ namespace ProcessCSV
                 "                           Example: /id ; /od ," + NL +
                 "                           Example: /id tab /od comma" + NL +
                 "" + NL +
-                "/showheaders    /hd        Lists all headers (column names) on the first line of the source file." + NL +
-                "                           Use this to find the column numbers to use for the columnselect argument." + NL +
+                "/headers        /hd        Lists all fields on the first line of the source file. These are often the headers." + NL +
+                "                           Use this to find the field numbers to use for the fields argument." + NL +
                 NL +
                 "/quiet          /q         No text output (except for Help, headers and example lines). Use exit codes to verify result." + NL +
                 NL +

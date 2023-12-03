@@ -351,13 +351,13 @@ namespace ProcessCsvLibrary
                 allRecords = new List<Record> { };
 
                 int maxFields = 0;
-                if (Arguments.ColumnCount == 0)
+                if (Arguments.FieldCount == 0)
                 {
                     maxFields = GuessNumberOfColumns();
                 }
                 else
                 {
-                    maxFields = Arguments.ColumnCount;
+                    maxFields = Arguments.FieldCount;
                 }
                 fieldCount = maxFields;
                 bool forceFieldCount = maxFields != 0;
