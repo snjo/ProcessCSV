@@ -71,7 +71,7 @@ namespace ProcessCSV
             if (arguments.SourceFile.Length > 0)
             {
                 processor.LoadFile(arguments.SourceFile, arguments.SourceEncoding);
-                processor.SetPattern(arguments.SelectedFields);
+                processor.SetPattern(arguments.SelectedColumns);
 
                 // output a number of lines from the result to console, with line number prefix
                 if (arguments.DisplayResult)
@@ -81,7 +81,7 @@ namespace ProcessCSV
                     //{
                     //    processor.CreateDefaultPattern();
                     //}
-                    processor.SetPattern(arguments.SelectedFields);
+                    processor.SetPattern(arguments.SelectedColumns);
                     string display = Messages.GetResultRecordsAsText(processor.allRecords, processor.fieldIndexes, true, arguments.ExampleLines, Messages.Message, arguments.DelimiterWrite);
                     Messages.Message(display, quiet: false);
                 }
@@ -205,11 +205,12 @@ namespace ProcessCSV
                                 Messages.Warning("/outencoding used, but no encoding was specified. Examples: /oe Latin1  /oe UTF-8", arguments.SupressWarnings);
                             }
                             break;
-                        case "fieldselect":
-                        case "fs":
+                        case "columnselect":
+                        case "cs":
+                        case "fs": // legacy alias for fieldSelect
                             if (commandValue != null)
                             {
-                                arguments.SelectedFields = commandValue;
+                                arguments.SelectedColumns = commandValue;
                             }
                             else
                             {
@@ -246,7 +247,7 @@ namespace ProcessCSV
                                 Messages.Warning("/outdelimiter used, but no delimiter was specified. Examples: /od tab  /od comma  /od ;", arguments.SupressWarnings);
                             }
                             break;
-                        case "headers":
+                        case "showheaders":
                         case "hd":
                             arguments.DisplayHeaders = true;
                             break;
@@ -255,11 +256,11 @@ namespace ProcessCSV
                             arguments.Pause = true;
                             Debug.WriteLine("Pause at end: " + arguments.Pause);
                             break;
-                        case "fieldcount":
-                        case "fc":
+                        case "columncount":
+                        case "cc":
                             if (commandValue != null)
                             {
-                                if (int.TryParse(commandValue, out arguments.FieldCount) == false)
+                                if (int.TryParse(commandValue, out arguments.ColumnCount) == false)
                                 {
                                     Messages.Warning("/fc used, but the value was not a valid number. Examples: /fc 4", arguments.SupressWarnings);
                                 }
