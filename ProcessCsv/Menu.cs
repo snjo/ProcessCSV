@@ -45,8 +45,8 @@ namespace ProcessCsv
             mainMenu.Add(new MenuOption("> Select Delimiters", ActionShowDelimiterMenu, "Delimiters", argNone, TextColor.Style1));
             mainMenu.Add(new MenuOption("> Select Encoding", ActionShowEncodingMenu, "Encoding", argNone, TextColor.Style2));
 
-            mainMenu.Add(new MenuOption("Select Fields (columns)", ActionSelectFields, "Select fields", argNone));
-            mainMenu.Add(new MenuOption("New header (column) names", ActionSetHeaderText, argNone, argNone));
+            mainMenu.Add(new MenuOption("Select columns", ActionSelectFields, argNone, argNone));
+            mainMenu.Add(new MenuOption("New headers (column names)", ActionSetHeaderText, argNone, argNone));
 
             mainMenu.Add(new MenuOption("> Error handling", ActionShowErrorMenu, "Error handling", argNone, TextColor.ErrorHandling));
             mainMenu.Add(new MenuOption("> Output (Save or display result)", ActionShowOutputMenu, "Output", argNone));
@@ -69,7 +69,7 @@ namespace ProcessCsv
             errorMenu.Add(new MenuOption(argIgnoreBadData, ActionFlipBool, argIgnoreBadData, argNone));
             errorMenu.Add(new MenuOption(argIgnoreMissingFields, ActionFlipBool, argIgnoreMissingFields, argNone));
             errorMenu.Add(new MenuOption(argSourceHasHeaders, ActionFlipBool, argSourceHasHeaders, argNone));
-            errorMenu.Add(new MenuOption("Set field count", ActionSetFieldCount, argNone, argNone));
+            errorMenu.Add(new MenuOption("Set columnt count", ActionSetFieldCount, argNone, argNone));
 
             outputMenu.Add(new MenuOption("Display file headers", ActionDisplayHeaders, argNone, argNone));
             outputMenu.Add(new MenuOption("Display example lines", ActionDisplayExample, argNone, argNone));
@@ -236,14 +236,14 @@ namespace ProcessCsv
             ArgumentFormatted("Target encoding", Arguments.TargetEncoding, comment: "Example: UTF-8, Latin1, codepage number", padding: pad, GetEncodingType(Arguments.TargetEncoding), TextColor.Style2);
 
 
-            ArgumentFormatted("Selected Fields", Arguments.SelectedFields, comment: "Blank = Show all fields/columns. Example: 0,1,4,8.", padding: pad);
-            ArgumentFormatted("New headers", Arguments.NewHeaders, comment: "Replace header (column) names on first line. Example: Name,Phone,Address", padding: pad);
+            ArgumentFormatted("Selected columns", Arguments.SelectedColumns, comment: "Blank = Use all columns. Example: 0,1,4,8.", padding: pad);
+            ArgumentFormatted("New headers", Arguments.NewHeaders, comment: "Replace headers (column names) on first line. Example: Name,Phone,Address", padding: pad);
 
-            ArgumentFormatted("Field Count", Arguments.FieldCount.ToString(), comment: "0 = Autodetect. Override if Autodetect guesses wrong", padding: pad, ErrorType.Normal, TextColor.ErrorHandling);
+            ArgumentFormatted("Columnt Count", Arguments.ColumnCount.ToString(), comment: "0 = Autodetect. Override if Autodetect guesses wrong", padding: pad, ErrorType.Normal, TextColor.ErrorHandling);
             ArgumentFormatted("Source has headers", Arguments.FileHasHeaders.ToString(), comment: "False if first line has data instead of header (column) names", padding: pad, ErrorType.Normal, TextColor.ErrorHandling);
-            ArgumentFormatted("Fix bad data", Arguments.FixBadData.ToString(), comment: "Fixes errors due to missing quotes or fields", padding: pad, ErrorType.Normal, TextColor.ErrorHandling);
+            ArgumentFormatted("Fix bad data", Arguments.FixBadData.ToString(), comment: "Fixes errors due to missing quotes or fields/columns", padding: pad, ErrorType.Normal, TextColor.ErrorHandling);
             ArgumentFormatted("Ignore bad data", Arguments.IgnoreBadData.ToString(), comment: "Ignores incorrect quotes or delimiters", padding: pad, ErrorType.Normal, TextColor.ErrorHandling);
-            ArgumentFormatted("Ignore missing fields", Arguments.IgnoreMissingField.ToString(), comment: "Ignores missing fields, inserts blank fields", padding: pad, ErrorType.Normal, TextColor.ErrorHandling);
+            ArgumentFormatted("Ignore missing fields", Arguments.IgnoreMissingField.ToString(), comment: "Ignores missing fields/columns, inserts blank fields", padding: pad, ErrorType.Normal, TextColor.ErrorHandling);
             /*
                     Arguments:
                     public bool Help = false;
@@ -438,9 +438,9 @@ namespace ProcessCsv
 
         private void ActionSelectFields(string argument = "", string subArgument = "")
         {
-            Console.Write("Enter selected Fields (example: 0,1,4,8): ");
+            Console.Write("Enter selected columns (example: 0,1,4,8): ");
             string text = Console.ReadLine() + "";
-            Arguments.SelectedFields = text;
+            Arguments.SelectedColumns = text;
         }
 
         private void ActionSelectDelimiter(string argument, string subArgument = "")
@@ -517,16 +517,16 @@ namespace ProcessCsv
 
         private void ActionSetFieldCount(string argument, string subArgument)
         {
-            Console.Write("Set custom field count: ");
+            Console.Write("Set custom column count: ");
             int fieldCount = 0;
             string fieldString = Console.ReadLine() + "";
             int.TryParse(fieldString, out fieldCount);
-            Arguments.FieldCount = fieldCount;
+            Arguments.ColumnCount = fieldCount;
         }
 
         private void ActionSetHeaderText(string argument, string subArgument)
         {
-            Console.Write("Enter custom column names: ");
+            Console.Write("Enter custom headers (column names): ");
             Arguments.NewHeaders = Console.ReadLine() + "";
             if (Arguments.NewHeaders.Length > 0)
             {
@@ -543,7 +543,7 @@ namespace ProcessCsv
             Console.Clear();
 
             processor.LoadFile(Arguments.SourceFile, Arguments.SourceEncoding);
-            processor.SetPattern(Arguments.SelectedFields);
+            processor.SetPattern(Arguments.SelectedColumns);
             Console.WriteLine(Environment.NewLine + "Displaying " + Arguments.ExampleLines + " example lines from the result:" + Environment.NewLine, Arguments.Quiet);
             string display = Messages.GetResultRecordsAsText(processor.allRecords, processor.fieldIndexes, true, Arguments.ExampleLines, Messages.Message, Arguments.DelimiterWrite);
             Console.WriteLine(display);

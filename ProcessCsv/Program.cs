@@ -71,7 +71,7 @@ namespace ProcessCSV
             if (arguments.SourceFile.Length > 0)
             {
                 processor.LoadFile(arguments.SourceFile, arguments.SourceEncoding);
-                processor.SetPattern(arguments.SelectedFields);
+                processor.SetPattern(arguments.SelectedColumns);
 
                 // output a number of lines from the result to console, with line number prefix
                 if (arguments.DisplayResult)
@@ -81,7 +81,7 @@ namespace ProcessCSV
                     //{
                     //    processor.CreateDefaultPattern();
                     //}
-                    processor.SetPattern(arguments.SelectedFields);
+                    processor.SetPattern(arguments.SelectedColumns);
                     string display = Messages.GetResultRecordsAsText(processor.allRecords, processor.fieldIndexes, true, arguments.ExampleLines, Messages.Message, arguments.DelimiterWrite);
                     Messages.Message(display, quiet: false);
                 }
@@ -205,15 +205,15 @@ namespace ProcessCSV
                                 Messages.Warning("/outencoding used, but no encoding was specified. Examples: /oe Latin1  /oe UTF-8", arguments.SupressWarnings);
                             }
                             break;
-                        case "fieldselect":
-                        case "fs":
+                        case "columnselect":
+                        case "cs":
                             if (commandValue != null)
                             {
-                                arguments.SelectedFields = commandValue;
+                                arguments.SelectedColumns = commandValue;
                             }
                             else
                             {
-                                Messages.Warning("/fieldselect used, but no fields were specified. Example: /fs 0,-1,4,8", arguments.SupressWarnings);
+                                Messages.Warning("/columnselect used, but no columns were specified. Example: /cs 0,-1,4,8", arguments.SupressWarnings);
                             }
                             break;
                         case "example":
@@ -255,18 +255,18 @@ namespace ProcessCSV
                             arguments.Pause = true;
                             Debug.WriteLine("Pause at end: " + arguments.Pause);
                             break;
-                        case "fieldcount":
-                        case "fc":
+                        case "columncount":
+                        case "cc":
                             if (commandValue != null)
                             {
-                                if (int.TryParse(commandValue, out arguments.FieldCount) == false)
+                                if (int.TryParse(commandValue, out arguments.ColumnCount) == false)
                                 {
-                                    Messages.Warning("/fc used, but the value was not a valid number. Examples: /fc 4", arguments.SupressWarnings);
+                                    Messages.Warning("/cc used, but the value was not a valid number. Examples: /cc 4", arguments.SupressWarnings);
                                 }
                             }
                             else
                             {
-                                Messages.Warning("/fc used, but no delimiter was specified. Examples: /fc 4", arguments.SupressWarnings);
+                                Messages.Warning("/cc used, but no number was specified. Examples: /cc 4", arguments.SupressWarnings);
                             }
                             break;
                         case "ignorebaddata":
@@ -296,7 +296,7 @@ namespace ProcessCSV
                             }
                             else
                             {
-                                Messages.Warning("/hewheaders used, but no header names was specified. Generating generic column names", arguments.SupressWarnings);
+                                Messages.Warning("/hewheaders used, but no header names were specified. Generating generic column names", arguments.SupressWarnings);
                                 arguments.ReplaceHeaders = true;
                             }
                             break;

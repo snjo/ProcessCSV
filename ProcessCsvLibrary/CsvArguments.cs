@@ -9,7 +9,7 @@ namespace ProcessCsvLibrary
         public string TargetFile = string.Empty;
         public string SourceEncoding = "UTF-8";
         public string TargetEncoding = "UTF-8";
-        public string SelectedFields = "";
+        public string SelectedColumns = "";
         public bool DisplayResult = false;
         public bool DisplayHeaders = false;
         public int ExampleLines = 5;
@@ -21,7 +21,7 @@ namespace ProcessCsvLibrary
         public bool IgnoreBadData = false;
         public bool IgnoreMissingField = false;
         public bool FixBadData = false;
-        public int FieldCount = 0; // if 0, autodetect
+        public int ColumnCount = 0; // if 0, autodetect
         public bool ReplaceHeaders = false;
         public string NewHeaders = string.Empty;
         public bool FileHasHeaders = true;
