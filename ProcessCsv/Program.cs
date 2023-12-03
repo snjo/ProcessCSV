@@ -246,7 +246,7 @@ namespace ProcessCSV
                                 Messages.Warning("/outdelimiter used, but no delimiter was specified. Examples: /od tab  /od comma  /od ;", arguments.SupressWarnings);
                             }
                             break;
-                        case "headers":
+                        case "showheaders":
                         case "hd":
                             arguments.DisplayHeaders = true;
                             break;

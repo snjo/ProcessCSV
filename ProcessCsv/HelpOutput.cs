@@ -49,7 +49,7 @@ namespace ProcessCSV
                 "                           Example: /id ; /od ," + NL +
                 "                           Example: /id tab /od comma" + NL +
                 "" + NL +
-                "/headers        /hd        Lists all fields (column names) on the first line of the source file. Theses are the headers." + NL +
+                "/showheaders    /hd        Lists all fields (column names) on the first line of the source file. Theses are the headers." + NL +
                 "                           Use this to find the column numbers to use for the columnselect argument." + NL +
                 NL +
                 "/quiet          /q         No text output (except for Help, headers and example lines). Use exit codes to verify result." + NL +
