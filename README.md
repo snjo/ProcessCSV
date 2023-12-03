@@ -7,10 +7,13 @@ Uses CsvHelper by Josh Close, https://joshclose.github.io/CsvHelper/
 
 ### Command line arguments
 
-    PROCESSCSV /l file [/s file] [/f fields] [/ie encoding] [/oe encoding]
+    Processes a CSV file to remove unwanted columns, change delimiter, encoding or inspect contents
+
+    PROCESSCSV /l file [/s file] [/cs columns] [/ie encoding] [/oe encoding]
         [/id delimiter] [/od delimiter] [/ex [number]] [/hd] [/q] [/p]
     
     PROCESSCSV sourcefile targetfile [other arguments]
+    PROCESSCSV [No arguments] : Starts the program in menu based mode
     
     ARGUMENT        ALIAS      FUNCTION
     
@@ -26,15 +29,15 @@ Uses CsvHelper by Josh Close, https://joshclose.github.io/CsvHelper/
                                Example encodings: UTF-8, UTF-8-BOM, LATIN1, ASCII, 865
                                Example: /ie Latin1 /oe UTF8
     
-    /fieldselect    /fs        Select fields (columns) in the CSV to keep in the target file.
-                               If unspecified, all fields will be output.
-                               Field set to -1 will be empty.
-                               Example: /f 0,-1,-1,21,8
+    /columnselect   /cs        Select columns in the CSV to keep in the target file.
+                               If unspecified, all columns will be output.
+                               Columns set to -1 will be empty.
+                               Example: /cs 0,-1,-1,21,8
     
-    /fieldcount     /fc        Manually specify the number of field (columns) in the file.
-                               Missing fields on a line will be added as empty values.
-                               If not used, field count is guessed by the number of delimiters found on line 0 and 1
-                               Example: /fc 4
+    /columncount    /cc        Manually specify the number of columns (fields) in the file.
+                               Missing columns (fields) on a line will be added as empty values.
+                               If not used, column count is guessed by the number of delimiters found on line 0 and 1
+                               Example: /cc 4
     
     /example        /ex        Lists a number of lines from the start of the file. (Default is 5 lines)
                                Example: /ex 10
@@ -45,11 +48,10 @@ Uses CsvHelper by Josh Close, https://joshclose.github.io/CsvHelper/
                                Example: /id ; /od ,
                                Example: /id tab /od comma
     
-    /headers        /hd        Lists all fields on the first line of the source file. These are often the headers.
-                               Use this to find the field numbers to use for the fields argument.
+    /showheaders    /hd        Lists all headers (column names) on the first line of the source file.
+                               Use this to find the column numbers to use for the columnselect argument.
     
     /quiet          /q         No text output (except for Help, headers and example lines). Use exit codes to verify result.
-    
     /pause          /p         Wait for keypress before exiting
     
     /ignorebaddata  /ibd       Proceed despite bad data, such as quotes that are not closed out or missing fields
@@ -59,13 +61,16 @@ Uses CsvHelper by Josh Close, https://joshclose.github.io/CsvHelper/
                                If delimiter count is wrong, columns may be misaligned. Also removes quotes from the fields.
     
     /newheaders     /nwh       Replace or add headers (column names) with a custom set of names.
-                               Enclose text in quotes if names contain spaces. If no names are listed, generic names are used.
+                               Enclose text in quotes if names contain spaces.
+                               If no names are listed, generic names are used.
                                Example: /nwh Name,Email,Phone
                                Example: /nwh "Name,Email Address,Phone Number"
                                Example: /nwh    >  This will generate Column 1, Column 2, Column 3 etc.
     
     /noheaders      /noh       Used with /newheaders if the first line is not a list of column names, but data.
                                Inserts a new row at the start of the file with new header names from /newheader
+
+
 
 ### Exit Codes:
 
@@ -80,3 +85,4 @@ Uses CsvHelper by Josh Close, https://joshclose.github.io/CsvHelper/
     8 : TargetUnauthorized
     9 : TargetDirectoryNotFound
     10 : UnkownError
+    11 : Aborted
