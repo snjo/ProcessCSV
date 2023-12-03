@@ -65,11 +65,13 @@ namespace ProcessCsv
             encodingMenu.Add(new MenuOption("Target: UTF-8", ActionSetEncodingPreset, argTarget, "UTF-8"));
             encodingMenu.Add(new MenuOption("Target: Latin1", ActionSetEncodingPreset, argTarget, "Latin1"));
 
+            errorMenu.Add(new MenuOption("Set columnt count", ActionSetFieldCount, argNone, argNone));
+            errorMenu.Add(new MenuOption(argSourceHasHeaders, ActionFlipBool, argSourceHasHeaders, argNone));
             errorMenu.Add(new MenuOption(argFixBadData, ActionFlipBool, argFixBadData, argNone));
             errorMenu.Add(new MenuOption(argIgnoreBadData, ActionFlipBool, argIgnoreBadData, argNone));
             errorMenu.Add(new MenuOption(argIgnoreMissingFields, ActionFlipBool, argIgnoreMissingFields, argNone));
-            errorMenu.Add(new MenuOption(argSourceHasHeaders, ActionFlipBool, argSourceHasHeaders, argNone));
-            errorMenu.Add(new MenuOption("Set columnt count", ActionSetFieldCount, argNone, argNone));
+            
+            
 
             outputMenu.Add(new MenuOption("Display file headers", ActionDisplayHeaders, argNone, argNone));
             outputMenu.Add(new MenuOption("Display example lines", ActionDisplayExample, argNone, argNone));
