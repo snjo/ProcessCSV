@@ -35,7 +35,7 @@ namespace ProcessCSV
                 "                           Columns set to -1 will be empty." + NL +
                 "                           Example: /f 0,-1,-1,21,8" + NL +
                 NL +
-                "/columncount    /fc        Manually specify the number of columns in the file." + NL +
+                "/columncount    /cc        Manually specify the number of columns in the file." + NL +
                 "                           Missing fields on a line will be added as empty values." + NL +
                 "                           If not used, column count is guessed by the number of delimiters found on line 0 and 1" + NL +
                 "                           Example: /fc 4" + NL +
