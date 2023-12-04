@@ -130,20 +130,35 @@ namespace ProcessCSV
             // check the arguments passed in the command line, starting with / or -
             for (int i = 0; i < commandLineArgs.Length; i++)
             {
+                string currentArg = commandLineArgs[i];
+                if (currentArg == string.Empty)
+                {
+                    Messages.Warning("Zero length argument in position " + i + ", skipped.", arguments.SupressWarnings);
+                    continue;
+                }
                 string firstChar = commandLineArgs[i].Substring(0, 1);
                 if ((firstChar == "-") || (firstChar == "/"))
                 {
-                    string commandType = commandLineArgs[i].Substring(1);
+                    string commandType = currentArg.Substring(1);
                     string? commandValue = null;
 
                     if (i + 1 < commandLineArgs.Length)
                     {
                         // if the next argument exists, and starts with a / or -, it's a new argument, not the value for the current argument
                         commandValue = commandLineArgs[i + 1];
-                        string firstCharValue = commandValue.Substring(0, 1);
-                        if ((firstCharValue == "-") || (firstCharValue == "/"))
+
+                        if (commandValue == string.Empty)
                         {
+                            Messages.Warning("Zero length sub-argument to " + currentArg, arguments.SupressWarnings);
                             commandValue = null;
+                        }
+                        else
+                        {
+                            string firstCharValue = commandValue.Substring(0, 1);
+                            if ((firstCharValue == "-") || (firstCharValue == "/"))
+                            {
+                                commandValue = null;
+                            }
                         }
                     }
 
@@ -318,6 +333,7 @@ namespace ProcessCSV
 
         private static string AssumeFileNameFromArgument(string argument, bool checkFileExists)
         {
+            if (argument.Length == 0) return string.Empty;
             string firstChar = argument.Substring(0, 1);
             if ((firstChar != "-") && (firstChar != "/"))
             {
