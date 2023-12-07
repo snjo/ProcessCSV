@@ -1,5 +1,7 @@
 ﻿using ProcessCsvLibrary;
 using System.Diagnostics;
+using System.Reflection;
+using System.Reflection.PortableExecutable;
 using System.Text;
 
 namespace ProcessCsv
@@ -13,6 +15,7 @@ namespace ProcessCsv
         private List<MenuOption> encodingMenu = new();
         private List<MenuOption> errorMenu = new();
         private List<MenuOption> outputMenu = new();
+        private List<MenuOption> columnMenu = new();
         private CsvArguments Arguments;
 
         private string argSource = "Source File";
@@ -45,8 +48,9 @@ namespace ProcessCsv
             mainMenu.Add(new MenuOption("> Select Delimiters", ActionShowDelimiterMenu, "Delimiters", argNone, TextColor.Style1));
             mainMenu.Add(new MenuOption("> Select Encoding", ActionShowEncodingMenu, "Encoding", argNone, TextColor.Style2));
 
-            mainMenu.Add(new MenuOption("Select columns", ActionSelectFields, argNone, argNone));
-            mainMenu.Add(new MenuOption("New headers (column names)", ActionSetHeaderText, argNone, argNone));
+            //mainMenu.Add(new MenuOption("Select columns", ActionSelectFields, argNone, argNone));
+            //mainMenu.Add(new MenuOption("New headers (column names)", ActionSetHeaderText, argNone, argNone));
+            mainMenu.Add(new MenuOption("Select and rename columns", ActionShowColumnMenu, "Toggle and rename columns", argNone));
 
             mainMenu.Add(new MenuOption("> Error handling", ActionShowErrorMenu, "Error handling", argNone, TextColor.ErrorHandling));
             mainMenu.Add(new MenuOption("> Output (Save or display result)", ActionShowOutputMenu, "Output", argNone));
@@ -70,8 +74,6 @@ namespace ProcessCsv
             errorMenu.Add(new MenuOption(argFixBadData, ActionFlipBool, argFixBadData, argNone));
             errorMenu.Add(new MenuOption(argIgnoreBadData, ActionFlipBool, argIgnoreBadData, argNone));
             errorMenu.Add(new MenuOption(argIgnoreMissingFields, ActionFlipBool, argIgnoreMissingFields, argNone));
-            
-            
 
             outputMenu.Add(new MenuOption("Display file headers", ActionDisplayHeaders, argNone, argNone));
             outputMenu.Add(new MenuOption("Display example lines", ActionDisplayExample, argNone, argNone));
@@ -137,22 +139,46 @@ namespace ProcessCsv
             }
 
             Console.WriteLine(Environment.NewLine);
-            ShowArguments();
-            Console.SetCursorPosition(0, menu.Count + 2);
-
-            ConsoleKeyInfo pressedKey = Console.ReadKey(true);
-            if (pressedKey.Key == ConsoleKey.Q || pressedKey.Key == ConsoleKey.Escape)
+            if (menu.Count < 15)
             {
-                if (argument == "Main Menu")
-                {
-                    MenuResult = MenuResultValues.Exit;
-                }
-                return false; // exit the menu
+                ShowArguments();
             }
+
+            Console.SetCursorPosition(0, Math.Min(menu.Count + 2, Console.BufferHeight-1));
+
+            string userInput = string.Empty;
+            if (menu.Count < 10)
+            {
+                ConsoleKeyInfo pressedKey = Console.ReadKey(true);
+                if (pressedKey.Key == ConsoleKey.Q || pressedKey.Key == ConsoleKey.Escape)
+                {
+                    if (argument == "Main Menu")
+                    {
+                        MenuResult = MenuResultValues.Exit;
+                    }
+                    return false; // exit the menu
+                }
+                userInput = pressedKey.KeyChar.ToString();
+            }
+            else // Allow numbers greater than 9
+            {
+                userInput = Console.ReadLine()+"";
+                if (userInput.ToLower() == "q")
+                {
+                    if (argument == "Main Menu")
+                    {
+                        MenuResult = MenuResultValues.Exit;
+                    }
+                    return false; // exit the menu
+                }
+            }
+            
+
+            
 
             Console.WriteLine();
             int pressedNumber = 0;
-            if (int.TryParse(pressedKey.KeyChar.ToString(), out pressedNumber) == false)
+            if (int.TryParse(userInput, out pressedNumber) == false)
             {
                 pressedNumber = -1;
                 //return to start
@@ -383,6 +409,141 @@ namespace ProcessCsv
         private void ActionShowOutputMenu(string argument = "", string subArgument = "")
         {
             while (ShowMenuOptions(outputMenu, argument)) ;
+        }
+
+        private enum ColumnAction
+        {
+            ChangeName,
+            Toggle
+        }
+
+        
+
+        private void ActionShowColumnMenu(string argument = "", string subArgument = "")
+        {
+            newColumnNames.Clear();
+            columnEnabled.Clear();
+            processor.LoadFile(Arguments.SourceFile, Arguments.SourceEncoding);
+            //processor.SetPattern(Arguments.SelectedColumns);
+            if (processor.allRecords.Count == 0)
+            {
+                Debug.WriteLine("ActionShowColumnMenu: Records are empty, couldn't show columns");
+                return;
+            }
+            columnMenu = new List<MenuOption>();
+            
+            for (int i = 0; i < processor.allRecords[0].Fields.Count; i++)
+            {
+                Field f = processor.allRecords[0].Fields[i];
+                newColumnNames.Add(processor.allRecords[0].Fields[i].Text);
+                columnEnabled.Add(true);
+                
+            }
+            AddColumnMenuOptions();
+            while (ShowMenuOptions(columnMenu, argument))
+            {
+                AddColumnMenuOptions();
+                Arguments.NewHeaders = ComposeNewHeaderString(newColumnNames);
+                Arguments.SelectedColumns = UpdateSelectedColumns(columnEnabled);
+            }
+        }
+
+        private void AddColumnMenuOptions()
+        {
+            columnMenu.Clear();
+            columnMenu.Add(new MenuOption(modeChange, ActionChangeColumnEditMode));
+            for (int i = 0; i < newColumnNames.Count; i++)
+            {
+                if (columnAction == ColumnAction.ChangeName)
+                {
+                    columnMenu.Add(new MenuOption(newColumnNames[i], ActionSetColumnName, i.ToString(), argNone, GetColorFromBool(i)));
+                }
+                else if (columnAction == ColumnAction.Toggle)
+                {
+                    columnMenu.Add(new MenuOption(newColumnNames[i], ActionToggleColumn, i.ToString(), argNone, GetColorFromBool(i)));
+                }
+            }
+        }
+
+        private ConsoleColor GetColorFromBool(int col)
+        {
+            if (columnEnabled[col])
+                return TextColor.Normal;
+            else
+                return TextColor.Disabled;
+        }
+
+        private string modeChange = "Switch to Toggle Mode";
+        private string newColumnName = string.Empty;
+        private ColumnAction columnAction = ColumnAction.ChangeName;
+        List<string> newColumnNames = new List<string>();
+        List<bool> columnEnabled = new List<bool>();
+        private void ActionSetColumnName(string colNum, string subArgument = "")
+        {
+            int col = int.Parse(colNum);
+            Console.Write("Enter new name for column" + col + " : ");
+            newColumnName = Console.ReadLine()+"";
+            newColumnNames[col] = newColumnName;
+            Debug.WriteLine("Set col " + col + " to " + newColumnName);
+            Arguments.ReplaceHeaders = true;
+        }
+
+        private void ActionToggleColumn(string colNum, string subArgument)
+        {
+            int col = int.Parse(colNum);
+            columnEnabled[col] = !columnEnabled[col];
+        }
+
+        private void ActionChangeColumnEditMode(string argument, string subArgument)
+        {
+            if (columnAction == ColumnAction.ChangeName)
+            {
+                columnAction = ColumnAction.Toggle;
+                modeChange = "Switch to Change name mode";
+            }
+            else
+            {
+                columnAction = ColumnAction.ChangeName;
+                modeChange = "Switch to Toggle mode";
+            }
+        }
+
+        private string ComposeNewHeaderString(List<string> headers)
+        {
+            string result = string.Empty;
+            for (int i = 0; i < headers.Count; i++ )
+            {
+                result += headers[i];
+                if (i < headers.Count - 1)
+                {
+                    result += ",";
+                }
+            }
+            Debug.WriteLine("Composed new header string: " + result);
+            return result;
+        }
+
+        private string UpdateSelectedColumns(List<bool> columns)
+        {
+            List<int> enabledColumns = new List<int>();
+            string result = string.Empty;
+            for (int i = 0; i < columns.Count; i++)
+            {
+                if (columns[i] == true)
+                {
+                    enabledColumns.Add(i);
+                }
+            }
+            for (int i = 0; i < enabledColumns.Count; i++)
+            {
+                result += enabledColumns[i];
+                if (i < enabledColumns.Count - 1)
+                {
+                    result += ",";
+                }
+            }
+            Debug.WriteLine("Composed new header string: " + result);
+            return result;
         }
 
         private void ActionSaveFile(string argument = "", string subArgument = "")

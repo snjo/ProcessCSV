@@ -12,5 +12,6 @@
         public static ConsoleColor OK = ConsoleColor.Green;
         public static ConsoleColor Style1 = ConsoleColor.DarkCyan;
         public static ConsoleColor Style2 = ConsoleColor.DarkGreen;
+        public static ConsoleColor Disabled = ConsoleColor.DarkGray;
     }
 }
