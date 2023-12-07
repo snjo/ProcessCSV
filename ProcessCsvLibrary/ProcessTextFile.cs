@@ -54,7 +54,14 @@ namespace ProcessCsvLibrary
             if (File.Exists(file))
             {
                 Message("Loading CSV (" + file + ") with codepage " + encoding.EncodingName, Arguments.Quiet);
-                linesAsArray = File.ReadAllLines(file);
+                try
+                {
+                    linesAsArray = File.ReadAllLines(file);
+                }
+                catch (Exception ex)
+                {
+                    Error(ex.Message, Arguments.SupressErrors);
+                }
                 GetAllFields(file, encoding);
                 return true;
             }
@@ -506,6 +513,16 @@ namespace ProcessCsvLibrary
         {
             Message("Changing column names to: " + Arguments.NewHeaders, Arguments.Quiet);
             List<string> newHeaders = new List<string>(Arguments.NewHeaders.Split(Arguments.DelimiterRead));
+            if (newHeaders.Count < 2)
+            {
+                // user probably used the wrong delimiter, try output Delimiter instead of input delimiter to split
+                List<string> newHeadersFix = new List<string>(Arguments.NewHeaders.Split(Arguments.DelimiterWrite));
+                if (newHeadersFix.Count > newHeaders.Count)
+                {
+                    newHeaders = newHeadersFix;
+                    Message("Couldn't split New Headers with '" + Arguments.DelimiterRead + "', Splitting with '" + Arguments.DelimiterWrite + "' instead", Arguments.Quiet);
+                }
+            }
             if (newHeaders.Count > fieldCount)
             {
                 Warning("Too many headers in New Headers argument, expected " + fieldCount + ". The extra ones will be dropped.", quiet: Arguments.SupressWarnings);

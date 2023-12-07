@@ -146,7 +146,7 @@ public class Messages
     }
 
     /// <summary>
-    /// Gets the text used in Display examble record /ex
+    /// Gets the text used in Display example record /ex
     /// </summary>
     /// <param name="limitNumberOfLines">If true, shows either 5 lines, or the number of lines set in maxLines</param>
     /// <param name="maxLines">The number of records to show as an example, starting from line 0. Only used if LimitNumberOfLines is true</param>
