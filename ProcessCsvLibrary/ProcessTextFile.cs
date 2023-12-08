@@ -335,7 +335,7 @@ namespace ProcessCsvLibrary
             }
 
             // detect if the file uses , ; or tab as delimiter
-            if (Arguments.DelimiterRead == "auto")
+            if (Arguments.DelimiterRead == "auto" || Arguments.DelimiterRead == string.Empty)
             {
                 Arguments.DelimiterRead = AutoDetectDelimiter();
             }

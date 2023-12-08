@@ -50,7 +50,7 @@ namespace ProcessCsv
 
             //mainMenu.Add(new MenuOption("Select columns", ActionSelectFields, argNone, argNone));
             //mainMenu.Add(new MenuOption("New headers (column names)", ActionSetHeaderText, argNone, argNone));
-            mainMenu.Add(new MenuOption("Select and rename columns", ActionShowColumnMenu, "Toggle and rename columns", argNone));
+            mainMenu.Add(new MenuOption("> Select and rename columns", ActionShowColumnMenu, "Toggle and rename columns", argNone));
 
             mainMenu.Add(new MenuOption("> Error handling", ActionShowErrorMenu, "Error handling", argNone, TextColor.ErrorHandling));
             mainMenu.Add(new MenuOption("> Output (Save or display result)", ActionShowOutputMenu, "Output", argNone));
@@ -450,7 +450,7 @@ namespace ProcessCsv
             //processor.SetPattern(Arguments.SelectedColumns);
             if (processor.allRecords.Count == 0)
             {
-                Debug.WriteLine("ActionShowColumnMenu: Records are empty, couldn't show columns");
+                errorOverride("Records are empty, couldn't show columns. Enter a valid file name.", true);
                 return;
             }
             columnMenu = new List<MenuOption>();
