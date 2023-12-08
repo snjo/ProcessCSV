@@ -35,7 +35,7 @@ namespace ProcessCsv
             processor = new ProcessTextFile(Arguments);
             processor.Message = messageOverride;
             processor.Warning = warningOverride;
-            processor.Error = warningOverride;
+            processor.Error = errorOverride;
             processor.Exit = exitOverride;
             mainMenu.Add(new MenuOption("Help - Command line arguments", ActionShowHelp, argNone, argNone, TextColor.Normal));
 
@@ -87,13 +87,37 @@ namespace ProcessCsv
         }
         private void warningOverride(string message, bool quiet)
         {
-            //Console.WriteLine(message);
             Debug.WriteLine(message);
+        }
+
+        private string delayedErrorMessage = string.Empty;
+        private void errorOverride(string message, bool quiet)
+        {
+            delayedErrorMessage = message;
+            Debug.WriteLine(message);
+        }
+        private void displayError()
+        {
+            if (delayedErrorMessage != string.Empty)
+            {
+                int x = Console.CursorLeft;
+                int y = Console.CursorTop;
+                ConsoleColor previousColor = Console.ForegroundColor;
+                Console.SetCursorPosition(0, Console.BufferHeight - 2);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(delayedErrorMessage);
+                Console.SetCursorPosition(x, y);
+                Console.ForegroundColor = previousColor;
+            }
+            delayedErrorMessage = string.Empty;
         }
         private void exitOverride(ExitCode exitCode, string? message, bool quiet, bool pause, bool exit)
         {
-            //Console.WriteLine(message);
-            Debug.WriteLine(message);
+            if (message != null)
+            {
+                delayedErrorMessage = message;
+                Debug.WriteLine(message);
+            }
         }
 
         public void Start()
@@ -116,12 +140,11 @@ namespace ProcessCsv
                 return false;
             }
 
-            //Console.SetCursorPosition(0, 0);
             Console.Clear();
 
-            //Console.WriteLine("TEST");
             Console.WriteLine("--- " + argument + " ---");// + " " + DateTime.Now.ToLongTimeString());
 
+            // Output the menu options, with color
             for (int i = 0; i < menu.Count; i++)
             {
                 Console.ForegroundColor = menu[i].Color;
@@ -129,6 +152,7 @@ namespace ProcessCsv
                 Console.ForegroundColor = previousColor;
             }
 
+            // Exit or go back
             if (argument == "Main menu")
             {
                 Console.WriteLine("Q: Quit");
@@ -138,15 +162,21 @@ namespace ProcessCsv
                 Console.WriteLine("Q: Back");
             }
 
+            // If there's room, output the Arguments to the bottom of the screen
             Console.WriteLine(Environment.NewLine);
             if (menu.Count < 15)
             {
                 ShowArguments();
             }
 
-            Console.SetCursorPosition(0, Math.Min(menu.Count + 2, Console.BufferHeight-1));
+            // display any error messages from the previous actions performed, placed before Read so you can see it.
+            displayError();
 
+            // Get user input
+            Console.SetCursorPosition(0, Math.Min(menu.Count + 2, Console.BufferHeight-1));
             string userInput = string.Empty;
+
+            // If it's possible to use single keypress input to select menu items, use ReadKey, otherwise, Read and confirm with Enter.
             if (menu.Count < 10)
             {
                 ConsoleKeyInfo pressedKey = Console.ReadKey(true);
@@ -173,9 +203,7 @@ namespace ProcessCsv
                 }
             }
             
-
-            
-
+            // Only accept numbered menu selection inputs
             Console.WriteLine();
             int pressedNumber = 0;
             if (int.TryParse(userInput, out pressedNumber) == false)
@@ -186,18 +214,13 @@ namespace ProcessCsv
             else
             {
                 pressedNumber -= 1;
+                // Run the delegate methods assigned to the menu option
                 if (pressedNumber >= 0 && pressedNumber < menu.Count)
                 {
                     menu[pressedNumber].Action(menu[pressedNumber].Argument, menu[pressedNumber].SubArgument);
                 }
-                //else
-                //{
-                //    Console.WriteLine("This menu option does not exist"); // can be removed later, just return to start
-                //}
-                //Console.WriteLine("Click any key to continue.");
-                //Console.ReadKey(); // remove later
             }
-
+            
             return true; // continue showing the menu
         }
 

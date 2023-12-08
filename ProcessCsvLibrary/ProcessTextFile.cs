@@ -428,7 +428,7 @@ namespace ProcessCsvLibrary
                             }
                             else
                             {
-                                Exit(ExitCode.SourceFileParseError, "Error: Missing Field on line " + lineNumber + ", field " + fieldNumber + ". Expected number of fields: " + maxFields, Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
+                                Exit(ExitCode.SourceFileParseError, "Error: Missing Field on line " + lineNumber + ", field " + fieldNumber + ". Expected number of fields: " + maxFields + ". Try using Ignore Missing Fields.", Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
                             }
                         }
                         else if (ex is CsvHelper.ParserException) //CsvHelper.ParserException)
