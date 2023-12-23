@@ -93,8 +93,12 @@ ProcessCsv can be used either by running it with command line parameters, or if 
 
 ## Menu mode
 
-Menu based operation sets the flags for you, then runs the process to show the result, or save to a file. Use number keys to navigate the menu, press Q or Esc to step back to the previous menu screen.
+Menu based operation sets the flags for you, then runs the process to show the result, or save to a file.
+
+Use number keys to navigate the menu, press Q or Esc to step back to the previous menu screen.
+
 If there are more than 9 menu options, each selection must be confirmed by pressing Enter (Readline instead of ReadKey).
+
 The CMD Console should be set to display 30 or more lines to see the whole menu.
 
 ![image](processCsv_screenshot.png)
