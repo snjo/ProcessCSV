@@ -5,6 +5,10 @@ by Andreas Aakvik Gogstad, 2023, https://github.com/snjo/processcsv
 
 Uses CsvHelper by Josh Close, https://joshclose.github.io/CsvHelper/
 
+ProcessCsv can be used either by running it with command line parameters, or if no parameters are used, through a menu based system.
+
+## Command line parameter mode
+
 ### Command line arguments
 
     Processes a CSV file to remove unwanted columns, change delimiter, encoding or inspect contents
@@ -86,3 +90,15 @@ Uses CsvHelper by Josh Close, https://joshclose.github.io/CsvHelper/
     9 : TargetDirectoryNotFound
     10 : UnkownError
     11 : Aborted
+
+## Menu mode
+
+Menu based operation sets the flags for you, then runs the process to show the result, or save to a file.
+
+Use number keys to navigate the menu, press Q or Esc to step back to the previous menu screen.
+
+If there are more than 9 menu options, each selection must be confirmed by pressing Enter (Readline instead of ReadKey).
+
+The CMD Console should be set to display 30 or more lines to see the whole menu.
+
+![image](processCsv_screenshot.png)
