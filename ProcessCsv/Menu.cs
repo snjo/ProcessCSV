@@ -16,6 +16,7 @@ namespace ProcessCsv
         private List<MenuOption> errorMenu = new();
         private List<MenuOption> outputMenu = new();
         private List<MenuOption> columnMenu = new();
+        private List<MenuOption> manualEntryMenu = new();
         private CsvArguments Arguments;
 
         private string argSource = "Source File";
@@ -51,6 +52,7 @@ namespace ProcessCsv
             //mainMenu.Add(new MenuOption("Select columns", ActionSelectFields, argNone, argNone));
             //mainMenu.Add(new MenuOption("New headers (column names)", ActionSetHeaderText, argNone, argNone));
             mainMenu.Add(new MenuOption("> Select and rename columns", ActionShowColumnMenu, "Toggle and rename columns", argNone));
+            mainMenu.Add(new MenuOption("> Manual entry", ActionShowManualEntry, "Manual entry", argNone));
 
             mainMenu.Add(new MenuOption("> Error handling", ActionShowErrorMenu, "Error handling", argNone, TextColor.ErrorHandling));
             mainMenu.Add(new MenuOption("> Output (Save or display result)", ActionShowOutputMenu, "Output", argNone));
@@ -78,6 +80,9 @@ namespace ProcessCsv
             outputMenu.Add(new MenuOption("Display file headers", ActionDisplayHeaders, argNone, argNone));
             outputMenu.Add(new MenuOption("Display example lines", ActionDisplayExample, argNone, argNone));
             outputMenu.Add(new MenuOption("Save file and Exit", ActionSaveFile, argNone, argNone));
+
+            manualEntryMenu.Add(new MenuOption("Set columns", ActionSelectFields, argNone, argNone));
+            manualEntryMenu.Add(new MenuOption("Set header names", ActionSetHeaderText, argNone, argNone));
         }
 
         private void messageOverride(string message, bool quiet)
@@ -514,6 +519,7 @@ namespace ProcessCsv
         private void ActionToggleColumn(string colNum, string subArgument)
         {
             int col = int.Parse(colNum);
+            Debug.WriteLine($"ActionToggleColumn: {colNum}: {col}");
             columnEnabled[col] = !columnEnabled[col];
         }
 
@@ -622,6 +628,13 @@ namespace ProcessCsv
             }
         }
 
+        private void ActionShowManualEntry(string argument = "", string subArgument = "")
+        {
+            while (ShowMenuOptions(manualEntryMenu, argument))
+            {
+            }
+        }
+
         private void ActionSelectFields(string argument = "", string subArgument = "")
         {
             Console.Write("Enter selected columns (example: 0,1,4,8): ");
@@ -712,7 +725,7 @@ namespace ProcessCsv
 
         private void ActionSetHeaderText(string argument, string subArgument)
         {
-            Console.Write("Enter custom headers (column names): ");
+            Console.Write("Enter custom headers/column names (Example: Name,Phone,Address): ");
             Arguments.NewHeaders = Console.ReadLine() + "";
             if (Arguments.NewHeaders.Length > 0)
             {
