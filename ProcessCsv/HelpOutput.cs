@@ -70,7 +70,13 @@ namespace ProcessCSV
                 "                           Example: /nwh    >  This will generate Column 1, Column 2, Column 3 etc." + NL +
                 NL +
                 "/noheaders      /noh       Used with /newheaders if the first line is not a list of column names, but data." + NL +
-                "                           Inserts a new row at the start of the file with new header names from /newheader" + NL
+                "                           Inserts a new row at the start of the file with new header names from /newheader" + NL +
+                NL +
+                "/agewarning     /aw        Warn if source file is older than n number of days" + NL +
+                "                           Example: /aw 10" + NL +
+                NL +
+                "/agerror        /ae        Error if source file is older than n number of days. Exits the program!" + NL +
+                "                           Example: /ae 10" + NL
                 );
 
             // nwh

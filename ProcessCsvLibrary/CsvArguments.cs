@@ -28,6 +28,9 @@ namespace ProcessCsvLibrary
         public bool ExitOnError = true;
         public bool SupressWarnings = false;
         public bool SupressErrors = false;
+        public bool FileAgeWarning = false;
+        public bool FileAgeError = false;
+        public int FileAgeLimitDays = 10;
     }
 }
 

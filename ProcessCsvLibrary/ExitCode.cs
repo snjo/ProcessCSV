@@ -16,6 +16,7 @@ public enum ExitCode : int
     TargetDirectoryNotFound = 9,
     UnkownError = 10,
     Aborted = 11,
+    SourceFileTooOld = 12,
     END
 }
 

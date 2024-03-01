@@ -32,6 +32,7 @@ namespace ProcessCsvLibrary
         private int fieldCount = 0;
         private int columnCount = 0;
         string[] linesAsArray = new string[0];
+        DateTime sourceFileDate = DateTime.MinValue;
 
         public ProcessTextFile()
         {
@@ -53,6 +54,24 @@ namespace ProcessCsvLibrary
             file = Environment.ExpandEnvironmentVariables(file);
             if (File.Exists(file))
             {
+                sourceFileDate = File.GetLastWriteTime(file);
+                TimeSpan fileAge = DateTime.Now - sourceFileDate;
+                if (fileAge.Days > Arguments.FileAgeLimitDays)
+                {
+                    if (Arguments.FileAgeError)
+                    {
+                        Error($"File is {fileAge.Days} days old. Error limit is {Arguments.FileAgeLimitDays} days.", Arguments.SupressWarnings);
+                        Exit(ExitCode.SourceFileTooOld, "Source file is too old", Arguments.SupressErrors, Arguments.Pause, exit: Arguments.ExitOnError);
+                    }
+                    else if (Arguments.FileAgeWarning)
+                    {
+                        Warning($"File is {fileAge.Days} days old. Warning limit is {Arguments.FileAgeLimitDays} days.", Arguments.SupressWarnings);
+                    }
+                }
+                else
+                {
+                    Message($"Source file is {fileAge.Days} days old", Arguments.Quiet);
+                }
                 Message("Loading CSV (" + file + ") with codepage " + encoding.EncodingName, Arguments.Quiet);
                 try
                 {

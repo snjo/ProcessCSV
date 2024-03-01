@@ -28,12 +28,12 @@ ARGUMENT        ALIAS      FUNCTION
 /columnselect   /cs        Select columns in the CSV to keep in the target file.
                            If unspecified, all columns will be output.
                            Columns set to -1 will be empty.
-                           Example: /cs 0,-1,-1,21,8
+                           Example: /f 0,-1,-1,21,8
 
-/columncount    /cc        Manually specify the number of columns (fields) in the file.
-                           Missing columns (fields) on a line will be added as empty values.
+/columncount    /cc        Manually specify the number of columns in the file.
+                           Missing fields on a line will be added as empty values.
                            If not used, column count is guessed by the number of delimiters found on line 0 and 1
-                           Example: /cc 4
+                           Example: /fc 4
 
 /example        /ex        Lists a number of lines from the start of the file. (Default is 5 lines)
                            Example: /ex 10
@@ -44,17 +44,18 @@ ARGUMENT        ALIAS      FUNCTION
                            Example: /id ; /od ,
                            Example: /id tab /od comma
 
-/showheaders    /hd        Lists all headers (column names) on the first line of the source file.
+/showheaders    /hd        Lists all fields (column names) on the first line of the source file. Theses are the headers.
                            Use this to find the column numbers to use for the columnselect argument.
 
 /quiet          /q         No text output (except for Help, headers and example lines). Use exit codes to verify result.
+
 /pause          /p         Wait for keypress before exiting
 
 /ignorebaddata  /ibd       Proceed despite bad data, such as quotes that are not closed out or missing fields
-/ignoremissing  /imf       Proceed despite missing fields. Missing fields on a line will be added as empty values
+/ignoremissing  /imf       Proceed despite missing fields/columns. Missing fields will be added as empty values
 
 /fixbaddata     /fbd       Fix lines with bad data. Guesses based on number of delimiter characters present.
-                           If delimiter count is wrong, columns may be misaligned. Also removes quotes from the fields.
+                           If delimiter count is wrong, columns may be misaligned. Also removes quotes from the values.
 
 /newheaders     /nwh       Replace or add headers (column names) with a custom set of names.
                            Enclose text in quotes if names contain spaces.
@@ -65,6 +66,12 @@ ARGUMENT        ALIAS      FUNCTION
 
 /noheaders      /noh       Used with /newheaders if the first line is not a list of column names, but data.
                            Inserts a new row at the start of the file with new header names from /newheader
+						   
+/agewarning     /aw        Warn if source file is older than n number of days
+                           Example: /aw 10
+						   
+/agerror        /ae        Error if source file is older than n number of days. Exits the program!
+                           Example: /ae 10
 
 EXIT CODES:
 
@@ -80,3 +87,4 @@ EXIT CODES:
 9 : TargetDirectoryNotFound
 10 : UnkownError
 11 : Aborted
+12 : SourceFileTooOld

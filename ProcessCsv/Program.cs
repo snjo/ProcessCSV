@@ -315,6 +315,22 @@ namespace ProcessCSV
                                 arguments.ReplaceHeaders = true;
                             }
                             break;
+                        case "agewarning":
+                        case "aw":
+                            {
+                                int fileAgeLimit = GetFileAgeLimit(arguments, commandValue);
+                                arguments.FileAgeWarning = true;
+                                arguments.FileAgeLimitDays = fileAgeLimit;
+                            }
+                            break;
+                        case "ageerror":
+                        case "ae":
+                            {
+                                int fileAgeLimit = GetFileAgeLimit(arguments, commandValue);
+                                arguments.FileAgeError = true;
+                                arguments.FileAgeLimitDays = fileAgeLimit;
+                            }
+                            break;
                         default:
                             Messages.ExitProgram(exitCode: ExitCode.InvalidArgument, "Invalid argument passed: /" + commandType, arguments.SupressErrors, arguments.Pause, exit: true);
                             break;
@@ -329,6 +345,24 @@ namespace ProcessCSV
                     }
                 }
             }
+        }
+
+        private static int GetFileAgeLimit(CsvArguments arguments, string? commandValue)
+        {
+            int fileAgeLimit = 5;
+            if (commandValue != null)
+            {
+                if (int.TryParse(commandValue, out fileAgeLimit) == false)
+                {
+                    Messages.Warning("/agewarning or ageerror used, but the number is invalid, using default 5 days", arguments.SupressWarnings);
+                }
+            }
+            else
+            {
+                Messages.Warning("/agewarning or ageerror used, but number of days was not specified, using default 5 days", arguments.SupressWarnings);
+            }
+
+            return fileAgeLimit;
         }
 
         private static string AssumeFileNameFromArgument(string argument, bool checkFileExists)
