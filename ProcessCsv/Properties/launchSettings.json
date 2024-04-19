@@ -1,8 +1,7 @@
 {
   "profiles": {
     "ProcessCsv": {
-      "commandName": "Project",
-      "commandLineArgs": "/?"
+      "commandName": "Project"
     }
   }
 }

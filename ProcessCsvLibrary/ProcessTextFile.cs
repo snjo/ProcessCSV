@@ -353,6 +353,13 @@ namespace ProcessCsvLibrary
                 return;
             }
 
+            if (reader.BaseStream.Length < 1)
+            {
+                Error($"Source file is empty. Read aborted.", quiet: Arguments.SupressErrors);
+                reader.Close();
+                return;
+            }
+
             // detect if the file uses , ; or tab as delimiter
             if (Arguments.DelimiterRead == "auto" || Arguments.DelimiterRead == string.Empty)
             {
@@ -395,7 +402,7 @@ namespace ProcessCsvLibrary
 
 
             Message("Loaded " + linesLoadedFromCSV + " lines from: " + Path.GetFileName(filename) + " in " + span.TotalSeconds + " seconds", Arguments.Quiet);
-
+            reader.Close();
         }
 
         /// <summary>
@@ -684,6 +691,12 @@ namespace ProcessCsvLibrary
             if (linesAsArray != null)
             {
                 int comma, semicolon, tab;
+
+                if (linesAsArray.Length == 0)
+                {
+                    Error("0 lines in source file", Arguments.SupressErrors);
+                    return ",";
+                }
 
                 // Checks line 0 for delimiters, and if that fails, checks line 1
                 CountAllDelimiterTypes(linesAsArray[0], out comma, out semicolon, out tab);
