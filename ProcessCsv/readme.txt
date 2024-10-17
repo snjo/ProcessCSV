@@ -70,7 +70,7 @@ ARGUMENT        ALIAS      FUNCTION
 /agewarning     /aw        Warn if source file is older than n number of days
                            Example: /aw 10
 						   
-/agerror        /ae        Error if source file is older than n number of days. Exits the program!
+/ageerror        /ae        Error if source file is older than n number of days. Exits the program!
                            Example: /ae 10
 
 EXIT CODES:

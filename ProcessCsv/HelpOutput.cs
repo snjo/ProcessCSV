@@ -75,7 +75,7 @@ namespace ProcessCSV
                 "/agewarning     /aw        Warn if source file is older than n number of days" + NL +
                 "                           Example: /aw 10" + NL +
                 NL +
-                "/agerror        /ae        Error if source file is older than n number of days. Exits the program!" + NL +
+                "/ageerror        /ae        Error if source file is older than n number of days. Exits the program!" + NL +
                 "                           Example: /ae 10" + NL
                 );
 
