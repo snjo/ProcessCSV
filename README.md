@@ -77,7 +77,7 @@ ProcessCsv can be used either by running it with command line parameters, or if 
     /agewarning     /aw        Warn if source file is older than n number of days
                                Example: /aw 10
 						   
-    /ageerror        /ae        Error if source file is older than n number of days. Exits the program!
+    /ageerror       /ae        Error if source file is older than n number of days. Exits the program!
                                Example: /ae 10
 
 
