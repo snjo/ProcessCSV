@@ -73,6 +73,12 @@ ProcessCsv can be used either by running it with command line parameters, or if 
     
     /noheaders      /noh       Used with /newheaders if the first line is not a list of column names, but data.
                                Inserts a new row at the start of the file with new header names from /newheader
+                               
+    /agewarning     /aw        Warn if source file is older than n number of days
+                               Example: /aw 10
+						   
+    /ageerror        /ae        Error if source file is older than n number of days. Exits the program!
+                               Example: /ae 10
 
 
 
@@ -90,6 +96,7 @@ ProcessCsv can be used either by running it with command line parameters, or if 
     9 : TargetDirectoryNotFound
     10 : UnkownError
     11 : Aborted
+    12 : SourceFileTooOld
 
 ## Menu mode
 
